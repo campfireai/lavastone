@@ -49,3 +49,6 @@ _deps
 # Build dirs
 build.debug/*
 build/*
+
+# mac ds store files
+.DS_Store
