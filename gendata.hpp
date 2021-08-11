@@ -1,3 +1,6 @@
+#ifndef __LAVASTONE_GENDATA_HPP__
+#define __LAVASTONE_GENDATA_HPP__
+
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -44,6 +47,10 @@ struct recipe {
   std::string author_location;
   int num_likes;
 };
+bool operator==(const recipe &lhs, const recipe &rhs);
+std::ostream &operator<<(std::ostream &os, const recipe &r);
 
 recipe random_recipe();
 std::vector<recipe> random_recipes(size_t n);
+
+#endif

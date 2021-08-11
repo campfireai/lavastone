@@ -4,6 +4,20 @@
 #include <string>
 #include <vector>
 
+bool operator==(const recipe &lhs, const recipe &rhs) {
+  return lhs.title == rhs.title && lhs.author == rhs.author &&
+         lhs.author_location == rhs.author_location &&
+         lhs.num_likes == rhs.num_likes;
+}
+std::ostream &operator<<(std::ostream &os, const recipe &r) {
+
+  os << "\033[35m"
+     << "Recipe:\n\033[33m\"" << r.title << "\"\n\033[39m"
+     << "submitted by: \033[36m" << r.author << "\033[39m, \033[34m"
+     << r.author_location << "\n\033[32m" << r.num_likes << " Likes\033[39m";
+  return os;
+}
+
 recipe random_recipe() {
   recipe r;
   r.author = random_element(titles) + " " + random_element(names);
