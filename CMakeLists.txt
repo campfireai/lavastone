@@ -22,5 +22,9 @@ find_package(zstd REQUIRED)
 
 link_directories(/usr/local/lib)
 
-add_executable(gendata gendata.cpp)
-target_link_libraries(gendata PUBLIC pthread zstd leveldb dl)
+add_library(gendata STATIC gendata.cpp)
+add_executable(test_gendata test_gendata.cpp)
+add_executable(test_lavastone test_lavastone.cpp)
+
+target_link_libraries(test_gendata PUBLIC gendata pthread zstd leveldb dl)
+target_link_libraries(test_lavastone PUBLIC gendata pthread zstd leveldb dl)
