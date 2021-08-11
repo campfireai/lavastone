@@ -44,13 +44,32 @@ template <typename T> void test_fixed_width(T foo) {
   demand(foo_loaded == foo, "fixed-width pack/unpack error");
 }
 
-template <typename T1, typename T2> void test_unordered_map(std::unordered_map<T1,T2> foo) {
-  std::cout << "storing container type\n";
-  pack_to_file(&foo, "foo.container");
-  std::unordered_map<T1,T2> foo_loaded;
-  unpack_from_file("foo.container", &foo_loaded);
-  std::cout << "loaded container type\n";
-  demand(foo_loaded == foo, "container pack/unpack error");
+template <typename T1, typename T2>
+void test_unordered_map(std::unordered_map<T1, T2> foo) {
+  std::cout << "storing unordered map\n";
+  pack_to_file(&foo, "foo.unordered_map");
+  std::unordered_map<T1, T2> foo_loaded;
+  unpack_from_file("foo.unordered_map", &foo_loaded);
+  std::cout << "loaded unordered map\n";
+  demand(foo_loaded == foo, "unordered_map pack/unpack error");
+}
+
+template <typename T> void test_set(std::set<T> foo) {
+  std::cout << "storing set\n";
+  pack_to_file(&foo, "foo.set");
+  std::set<T> foo_loaded;
+  unpack_from_file("foo.set", &foo_loaded);
+  std::cout << "loaded set\n";
+  demand(foo_loaded == foo, "set pack/unpack error");
+}
+
+template <typename T1, typename T2> void test_map(std::map<T1, T2> foo) {
+  std::cout << "storing map\n";
+  pack_to_file(&foo, "foo.map");
+  std::map<T1, T2> foo_loaded;
+  unpack_from_file("foo.map", &foo_loaded);
+  std::cout << "loaded map\n";
+  demand(foo_loaded == foo, "map pack/unpack error");
 }
 
 // this must be invoked once to allow (de)serialization of this struct type
@@ -71,12 +90,21 @@ int main(int argc, char *argv[]) {
   auto recipes = random_recipes(num_records);
   std::unordered_map<std::string, size_t> num_recipes_by_author;
   // build a fake index to test map serialization
-  for (auto r: recipes)
-      num_recipes_by_author[r.author + " | " + r.author_location]++;
+  for (auto r : recipes)
+    num_recipes_by_author[r.author + " | " + r.author_location]++;
+
+  std::map<size_t, std::set<std::string>> authors_by_num_recipes;
+  for (auto it : num_recipes_by_author) {
+    authors_by_num_recipes[it.second].insert(it.first);
+  }
+
+  std::set<int> a_set = {1, 2, 3, 4, 5};
 
   test_string(recipes.at(0).title);
   test_struct(recipes.at(0));
   test_vector(recipes);
   test_fixed_width(recipes.size());
+  test_set(a_set);
   test_unordered_map(num_recipes_by_author);
+  test_map(authors_by_num_recipes);
 }

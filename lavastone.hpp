@@ -3,9 +3,10 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <set>
 #include <string_view>
 #include <unordered_map>
-#include <map>
 #include <unordered_set>
 
 #include <boost/fusion/adapted/struct.hpp>
@@ -69,42 +70,41 @@ static void Unpack(const std::string_view &data, std::vector<T> *vp) {
   }
 }
 
-#define UNPACK_1D_CONTAINER(TVEC, APPEND) \
-    template <typename T> \
-    static void Unpack(const std::string_view &data, TVEC<T> *vp) { \
-      TVEC<T> vdata; \
-      Unpack(data, &vdata); \
-      for (auto elem : vdata) \
-        vp -> APPEND (elem); \
-    }
+// unpack via vector
+#define UNPACK_1D_CONTAINER(TVEC, APPEND)                                      \
+  template <typename T>                                                        \
+  static void Unpack(const std::string_view &data, TVEC<T> *vp) {              \
+    std::vector<T> vdata;                                                      \
+    Unpack(data, &vdata);                                                      \
+    for (auto elem : vdata)                                                    \
+      vp->APPEND(elem);                                                        \
+  }
 
 UNPACK_1D_CONTAINER(std::unordered_set, insert);
 UNPACK_1D_CONTAINER(std::set, insert);
 
-#define UNPACK_2D_CONTAINER(TMAP) \
-    template <typename T1, typename T2> \
-    static void Unpack(const std::string_view &data, \
-                       TMAP<T1, T2> *mp) { \
-      size_t i = 0; \
-      while (i < data.size()) { \
-        size_t kslen, vslen; \
-        Unpack(data.substr(i, sizeof(kslen)), &kslen); \
-        i += sizeof(kslen); \
-        T1 k; \
-        Unpack(data.substr(i, kslen), &k); \
-        i += kslen; \
-        Unpack(data.substr(i, sizeof(vslen)), &vslen); \
-        i += sizeof(vslen); \
-        T2 v; \
-        Unpack(data.substr(i, vslen), &v); \
-        i += vslen; \
-        (*mp)[k] = v; \
-      } \
-    }
+#define UNPACK_2D_CONTAINER(TMAP)                                              \
+  template <typename T1, typename T2>                                          \
+  static void Unpack(const std::string_view &data, TMAP<T1, T2> *mp) {         \
+    size_t i = 0;                                                              \
+    while (i < data.size()) {                                                  \
+      size_t kslen, vslen;                                                     \
+      Unpack(data.substr(i, sizeof(kslen)), &kslen);                           \
+      i += sizeof(kslen);                                                      \
+      T1 k;                                                                    \
+      Unpack(data.substr(i, kslen), &k);                                       \
+      i += kslen;                                                              \
+      Unpack(data.substr(i, sizeof(vslen)), &vslen);                           \
+      i += sizeof(vslen);                                                      \
+      T2 v;                                                                    \
+      Unpack(data.substr(i, vslen), &v);                                       \
+      i += vslen;                                                              \
+      (*mp)[k] = v;                                                            \
+    }                                                                          \
+  }
 
-UNPACK_2D_CONTAINER(std::unordered_map)
-UNPACK_2D_CONTAINER(std::map)
-
+UNPACK_2D_CONTAINER(std::unordered_map);
+UNPACK_2D_CONTAINER(std::map);
 
 template <typename T> static std::string PackData(const T *data) {
   std::string d(sizeof(T), L'\0');
@@ -118,42 +118,45 @@ static inline std::string Pack(const unsigned *data) { return PackData(data); }
 
 static inline std::string Pack(const size_t *data) { return PackData(data); }
 
-#define PACK_1D_CONTAINER(TVEC) \
-    template <typename T> std::string Pack(TVEC<T> *data) { \
-      std::string packed_string = ""; \
-      for (auto v : *data) { \
-        auto vs = Pack(&v); \
-        size_t vslen = vs.size(); \
-        packed_string += Pack(&vslen) + Pack(&vs); \
-      } \
-      return packed_string; \
-    }
-
-PACK_1D_CONTAINER(std::vector)
-PACK_1D_CONTAINER(std::unordered_set)
-PACK_1D_CONTAINER(std::set)
-
-// template <typename T> std::string Pack(const std::unordered_set<T> *data) {
-//   // std::cerr << "packing unordered set" << std::endl;
-//   std::vector<T> vdata;
-//   for (auto elem : *data)
-//     vdata.push_back(elem);
-//
-//   return Pack(&vdata);
-// }
-
-template <typename T1, typename T2>
-std::string Pack(const std::unordered_map<T1, T2> *data) {
+template <typename T> std::string Pack(std::vector<T> *data) {
   std::string packed_string = "";
-  for (auto kv : *data) {
-    auto ks = Pack(&kv.first);
-    size_t kslen = ks.size();
-    auto vs = Pack(&kv.second);
+  for (auto v : *data) {
+    auto vs = Pack(&v);
     size_t vslen = vs.size();
-    packed_string += Pack(&kslen) + Pack(&ks) + Pack(&vslen) + Pack(&vs);
+    packed_string += Pack(&vslen) + Pack(&vs);
   }
   return packed_string;
 }
+
+// pack via vector
+#define PACK_1D_CONTAINER(TVEC)                                                \
+  template <typename T> std::string Pack(const TVEC<T> *data) {                \
+    std::vector<T> vdata;                                                      \
+    for (auto elem : *data)                                                    \
+      vdata.push_back(elem);                                                   \
+    return Pack(&vdata);                                                       \
+  }
+
+PACK_1D_CONTAINER(std::unordered_set);
+PACK_1D_CONTAINER(std::set);
+
+
+#define PACK_2D_CONTAINER(TMAP)                                                \
+  template <typename T1, typename T2>                                          \
+  std::string Pack(const TMAP<T1, T2> *data) {                                 \
+    std::string packed_string = "";                                            \
+    for (auto kv : *data) {                                                    \
+      auto ks = Pack(&kv.first);                                               \
+      size_t kslen = ks.size();                                                \
+      auto vs = Pack(&kv.second);                                              \
+      size_t vslen = vs.size();                                                \
+      packed_string += Pack(&kslen) + Pack(&ks) + Pack(&vslen) + Pack(&vs);    \
+    }                                                                          \
+    return packed_string;                                                      \
+  }
+
+PACK_2D_CONTAINER(std::map);
+PACK_2D_CONTAINER(std::unordered_map);
 
 template <typename T> std::string FusionStructPack(const T *data) {
   std::string packed_string;
