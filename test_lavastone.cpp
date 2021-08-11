@@ -1,6 +1,8 @@
 #include "gendata.hpp"
 #include "lavastone.hpp"
+#include <chrono>
 #include <iostream>
+#include <string>
 
 #define demand(cond, str)                                                      \
   if (!(cond)) {                                                               \
@@ -27,11 +29,26 @@ template <typename T> void test_struct(T foo) {
 }
 
 template <typename T> void test_vector(std::vector<T> foo) {
+  auto start = std::chrono::steady_clock::now();
   std::cout << "storing vector\n";
   pack_to_file(&foo, "foo.vector");
+  auto end = std::chrono::steady_clock::now();
+  std::cout << "stored vector with " << foo.size() << " records in "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << " µs\n";
+
   std::vector<T> foo_loaded;
+
+  start = std::chrono::steady_clock::now();
   unpack_from_file("foo.vector", &foo_loaded);
-  std::cout << "loaded vector\n";
+  end = std::chrono::steady_clock::now();
+  std::cout << "loaded vector with " << foo.size() << " records in "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << " µs\n";
   demand(foo_loaded == foo, "vector pack/unpack error");
 }
 

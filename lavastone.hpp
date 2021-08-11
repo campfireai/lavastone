@@ -140,7 +140,6 @@ template <typename T> std::string Pack(std::vector<T> *data) {
 PACK_1D_CONTAINER(std::unordered_set);
 PACK_1D_CONTAINER(std::set);
 
-
 #define PACK_2D_CONTAINER(TMAP)                                                \
   template <typename T1, typename T2>                                          \
   std::string Pack(const TMAP<T1, T2> *data) {                                 \

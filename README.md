@@ -1,1 +1,67 @@
-# lavastone
+# lavastone 🌋🪨
+
+Lavastone is a succinct and efficient C++ data structure (de)serialization framework designed for lean applications handling lots of data.
+
+Lavastone is highly extensible: with one line it can accommodate arbitrary struct types via the fabulous [Boost Fusion library](https://www.boost.org/doc/libs/1_76_0/libs/fusion/doc/html/index.html).
+It can similarly accommodate most custom container types that support iteration, see [Usage](#usage).
+
+Please see the docs below to [get started](#compile-and-run-tests).
+
+## Getting Started
+### Compile and run tests
+```
+git clone https://github.com/campfireai/lavastone.git
+cd lavastone
+mkdir build
+cd build
+cmake ..
+cmake --build . --parallel
+./test_lavastone 10000
+```
+
+### Adapting a custom struct type
+```
+#include <string>
+#include "lavastone.hpp"
+
+
+struct MyStruct {
+    int my_int;
+    std::string my_string;
+};
+
+LAVASTONE_ADAPT_STRUCT(MyStruct, my_int, my_string);
+
+```
+Now lavastone knows how to serialize and deserialize your struct.
+```
+// serialize
+MyStruct foo = {.my_int=42, .my_string="hello world"};
+pack_to_file(&foo, "foo.struct");
+
+// deserialize
+MyStruct foo_new;
+unpack_from_file("foo.struct", &foo_new);
+```
+
+### Usage
+The `pack_to_file` and `unpack_from_file` convenience functions simply wrap the core serialization engine, which consists of a library of `Pack` and `Unpack` functions implemented for various fixed-width and container types.
+Use these methods to access the raw strings that Lavastone serializes to / from.
+
+If you need to extend to other container types, see the `PACK_1D_CONTAINER` and `PACK_2D_CONTAINER` macros in `lavastone.hpp`. Most likely, if you want to extend to a map-like type `MyMap`, you can have Lavastone declare the appropriate templates by adding two lines:
+```
+PACK_2D_CONTAINER(MyMap);
+UNPACK_2D_CONTAINER(MyMap);
+```
+Similarly for a 1D iterable container e.g. `MyVector`, you could use
+```
+PACK_1D_CONTAINER(MyVector);
+UNPACK_1D_CONTAINER(MyVector);
+```
+and then `Pack`, `pack_to_file`, and the associated deserializers should "just work".
+
+
+## Development and Contributing
+Interested in contributing? We 💙 pull requests!
+If you have any suggestions or find a bug, you can [open an issue](https://github.com/deepgram-devs/meeting-bot/issues/new) on this repository.
+Please be nice 🙂
