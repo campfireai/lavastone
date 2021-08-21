@@ -1,5 +1,6 @@
 # lavastone 🌋🪨
-
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 Serialize and deserialize C++ variables with Lavastone!
 Why would you use our 200-line header file?
 - It supports many standard types (`int`, `vector`, `map`, ... out of the box)

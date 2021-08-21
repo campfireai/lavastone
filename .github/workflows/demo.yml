@@ -1,0 +1,36 @@
+name: Lavastone Library CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, macos-latest]
+      
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies on Linux
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt update 
+        sudo apt install build-essential cmake libleveldb-dev libzstd-dev libboost-dev
+    - name: Install dependencies on Mac
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake leveldb zstd boost
+    - name: Build Lavastone
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --parallel
+        ./test_lavastone 10000
+
