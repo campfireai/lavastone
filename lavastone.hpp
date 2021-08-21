@@ -2,12 +2,14 @@
 #define __LAVASTONE_HPP__
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <map>
 #include <set>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <memory>
 
 #include <boost/fusion/adapted/struct.hpp>
 #include <boost/fusion/include/for_each.hpp>

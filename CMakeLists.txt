@@ -19,6 +19,17 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 include_directories(/usr/local/include include/)
 
+message("searching for required package BOOST")
+message("if this fails, run (Mac):")
+message("brew install boost")
+message("or (Ubuntu):")
+message("apt-get install -y libboost-dev")
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+else()
+  message("did not find boost -- this is required")
+endif()
 
 find_package(LEVELDB)
 if (LEVELDB_LIBRARIES MATCHES NOTFOUND)
