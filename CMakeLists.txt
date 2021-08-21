@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(lavastone VERSION 0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(cmake/clang-cxx-dev-tools.cmake)
 
@@ -9,10 +9,10 @@ include(cmake/clang-cxx-dev-tools.cmake)
 
 if(CMAKE_BUILD_TYPE MATCHES debug)
   message("debug mode")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -g -O0 -Wall ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -Wall ")
   add_definitions(-DDEBUG_ENABLED)
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -O3 -Wall ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall ")
 endif(CMAKE_BUILD_TYPE MATCHES debug)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
