@@ -1,5 +1,7 @@
 # lavastone 🌋🪨
 
+[![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
+
 Lavastone is a succinct and efficient C++ data structure (de)serialization framework designed for lean applications handling lots of data.
 
 Lavastone is highly extensible: with one line it can accommodate arbitrary struct types via the fabulous [Boost Fusion library](https://www.boost.org/doc/libs/1_76_0/libs/fusion/doc/html/index.html).
