@@ -6,19 +6,36 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(cmake/clang-cxx-dev-tools.cmake)
 
 
+
 if(CMAKE_BUILD_TYPE MATCHES debug)
   message("debug mode")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -g -Wall ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -g -O0 -Wall ")
   add_definitions(-DDEBUG_ENABLED)
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -O3 -Wall ")
 endif(CMAKE_BUILD_TYPE MATCHES debug)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 include_directories(/usr/local/include include/)
 
 
-find_package(leveldb REQUIRED)
-find_package(zstd REQUIRED)
+find_package(LEVELDB)
+if (LEVELDB_LIBRARIES MATCHES NOTFOUND)
+  message("LevelDB not found, building without it")
+else()
+  include_directories(${LEVELDB_INCLUDE_DIRS})
+  set(LIBS ${LIBS} ${LEVELDB_LIBRARIES})
+endif (LEVELDB_LIBRARIES MATCHES NOTFOUND)
+
+find_package(ZSTD)
+if (ZSTD_LIBRARIES MATCHES NOTFOUND)
+  message("ZSTD not found, building without it")
+else()
+  include_directories(${ZSTD_INCLUDE_DIRS})
+  set(LIBS ${LIBS} ${ZSTD_LIBRARIES})
+endif(ZSTD_LIBRARIES MATCHES NOTFOUND)
+
 
 link_directories(/usr/local/lib)
 
@@ -26,5 +43,5 @@ add_library(gendata STATIC gendata.cpp)
 add_executable(test_gendata test_gendata.cpp)
 add_executable(test_lavastone test_lavastone.cpp)
 
-target_link_libraries(test_gendata PUBLIC gendata pthread zstd leveldb dl)
-target_link_libraries(test_lavastone PUBLIC gendata pthread zstd leveldb dl)
+target_link_libraries(test_gendata PUBLIC gendata pthread dl ${LIBS})
+target_link_libraries(test_lavastone PUBLIC gendata pthread dl ${LIBS})
