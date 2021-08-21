@@ -1,5 +1,6 @@
 # lavastone 🌋🪨
 
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
 Lavastone is a succinct and efficient C++ data structure (de)serialization framework designed for lean applications handling lots of data.
