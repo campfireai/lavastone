@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update 
-        sudo apt install build-essential cmake libleveldb-dev libzstd-dev
+        sudo apt install build-essential cmake libleveldb-dev libzstd-dev libboost-dev
     - name: Build Lavastone
       run: |
         mkdir build
