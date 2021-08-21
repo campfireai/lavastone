@@ -1,6 +1,19 @@
 # lavastone 🌋🪨
 
-Lavastone is a succinct and efficient C++ data structure (de)serialization framework designed for lean applications handling lots of data.
+Serialize and deserialize C++ variables with Lavastone!
+Why would you use our 200-line header file?
+- It supports many standard types (`int`, `vector`, `map`, ... out of the box)
+- It is lightweight and simple to use
+- It is easily [extensible to other data types](#extending-to-other-data-types), without requiring changes to the class or struct definitions
+
+### Motivation
+We built Lavastone for an application that needed to handle user queries to a big dataset. These queries could not be efficiently executed by an off-the-shelf SQL or graph-based database. Instead, our code populated many large datastructures that could be used to efficiently respond to the queries in production.
+
+The problem we had was that building these index datastructures could take several hours or days, which caused an unacceptable "boot time" of the application. To reduce the boot time, we built these datastructures once in an offline stage, serialize them to disk using Lavastone, and then loaded them back into memory in a matter of seconds to run in production.
+
+1. (slow, takes several hours) __Build stage:__ parse, clean, aggregate, and index the data with large datastructures and store these to disk
+2. (fast) __Production stage:__ Quickly load the index datastructures from disk and respond to user queries about the data using our custom application logic
+
 
 Lavastone is highly extensible: with one line it can accommodate arbitrary struct types via the fabulous [Boost Fusion library](https://www.boost.org/doc/libs/1_76_0/libs/fusion/doc/html/index.html).
 It can similarly accommodate most custom container types that support iteration, see [Usage](#usage).
@@ -48,6 +61,7 @@ unpack_from_file("foo.struct", &foo_new);
 The `pack_to_file` and `unpack_from_file` convenience functions simply wrap the core serialization engine, which consists of a library of `Pack` and `Unpack` functions implemented for various fixed-width and container types.
 Use these methods to access the raw strings that Lavastone serializes to / from.
 
+#### Extending to other data types
 If you need to extend to other container types, see the `PACK_1D_CONTAINER` and `PACK_2D_CONTAINER` macros in `lavastone.hpp`. Most likely, if you want to extend to a map-like type `MyMap`, you can have Lavastone declare the appropriate templates by adding two lines:
 ```
 PACK_2D_CONTAINER(MyMap);
