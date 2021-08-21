@@ -1,4 +1,4 @@
-name: Lavastone Benchmark CI Ubuntu
+name: Lavastone Library CI
 
 on:
   push:
