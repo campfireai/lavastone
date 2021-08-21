@@ -26,6 +26,6 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        cmake --build . -parallel
+        cmake --build . --parallel
         ./test_lavastone 10000
 
