@@ -2,14 +2,15 @@
 #define __LAVASTONE_HPP__
 
 #include <fstream>
-#include <sstream>
 #include <iostream>
-#include <map>
-#include <set>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
+#include <type_traits>
 #include <memory>
+#include <sstream>
+#include <string_view>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
 
 #include <boost/fusion/adapted/struct.hpp>
 #include <boost/fusion/include/for_each.hpp>
@@ -130,34 +131,38 @@ template <typename T> std::string Pack(std::vector<T> *data) {
   return packed_string;
 }
 
+
 // pack via vector
-#define PACK_1D_CONTAINER(TVEC)                                                \
-  template <typename T> std::string Pack(const TVEC<T> *data) {                \
-    std::vector<T> vdata;                                                      \
-    for (auto elem : *data)                                                    \
-      vdata.push_back(elem);                                                   \
-    return Pack(&vdata);                                                       \
+template <template <typename, typename...> typename Collection, typename T,
+          typename... Args>
+std::string Pack(const Collection<T, Args...> *data) {
+  std::vector<T> vdata;
+  for (auto elem : *data)
+    vdata.push_back(elem);
+  return Pack(&vdata);
+}
+
+
+// detect map-like objects
+template <typename T, typename = void>
+struct is_begin_points_first : std::false_type {};
+template <typename T>
+struct is_begin_points_first<T, std::void_t<decltype(std::declval<T>().begin()->first)>> : std::true_type {};
+
+// pack map-like objects
+template <template <typename, typename, typename...> typename Mapping, typename T1, typename T2, typename... Args>
+std::string Pack(const Mapping<T1, T2, Args...> *data, typename std::enable_if<is_begin_points_first<Mapping<T1, T2, Args...>>::value>::type* dummy = 0) {
+  std::string packed_string = "";
+  for (auto kv : *data) {
+    auto ks = Pack(&kv.first);
+    size_t kslen = ks.size();
+    auto vs = Pack(&kv.second);
+    size_t vslen = vs.size();
+    packed_string += Pack(&kslen) + Pack(&ks) + Pack(&vslen) + Pack(&vs);
   }
+  return packed_string;
+}
 
-PACK_1D_CONTAINER(std::unordered_set);
-PACK_1D_CONTAINER(std::set);
-
-#define PACK_2D_CONTAINER(TMAP)                                                \
-  template <typename T1, typename T2>                                          \
-  std::string Pack(const TMAP<T1, T2> *data) {                                 \
-    std::string packed_string = "";                                            \
-    for (auto kv : *data) {                                                    \
-      auto ks = Pack(&kv.first);                                               \
-      size_t kslen = ks.size();                                                \
-      auto vs = Pack(&kv.second);                                              \
-      size_t vslen = vs.size();                                                \
-      packed_string += Pack(&kslen) + Pack(&ks) + Pack(&vslen) + Pack(&vs);    \
-    }                                                                          \
-    return packed_string;                                                      \
-  }
-
-PACK_2D_CONTAINER(std::map);
-PACK_2D_CONTAINER(std::unordered_map);
 
 template <typename T> std::string FusionStructPack(const T *data) {
   std::string packed_string;
