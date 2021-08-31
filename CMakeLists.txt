@@ -51,8 +51,13 @@ endif(ZSTD_LIBRARIES MATCHES NOTFOUND)
 link_directories(/usr/local/lib)
 
 add_library(gendata STATIC gendata.cpp)
+
+set(LIBS ${LIBS} gendata pthread dl)
 add_executable(test_gendata test_gendata.cpp)
 add_executable(test_lavastone test_lavastone.cpp)
+add_executable(benchmark_boost benchmark_boost.cpp)
 
-target_link_libraries(test_gendata PUBLIC gendata pthread dl ${LIBS})
-target_link_libraries(test_lavastone PUBLIC gendata pthread dl ${LIBS})
+
+target_link_libraries(benchmark_boost PUBLIC ${LIBS} boost_serialization)
+target_link_libraries(test_gendata PUBLIC ${LIBS})
+target_link_libraries(test_lavastone PUBLIC ${LIBS})
