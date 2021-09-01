@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04, macos-latest]
-      
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -20,8 +20,8 @@ jobs:
     - name: Install dependencies on Linux
       if: runner.os == 'Linux'
       run: |
-        sudo apt update 
-        sudo apt install build-essential cmake libleveldb-dev libzstd-dev libboost-dev
+        sudo apt update
+        sudo apt install build-essential cmake libleveldb-dev libzstd-dev libboost-dev libboost-serialization-dev
     - name: Install dependencies on Mac
       if: runner.os == 'macOS'
       run: |
@@ -33,4 +33,3 @@ jobs:
         cmake ..
         cmake --build . --parallel
         ./test_lavastone 10000
-
