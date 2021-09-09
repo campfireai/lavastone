@@ -124,4 +124,42 @@ int main(int argc, char *argv[]) {
   test_set(a_set);
   test_unordered_map(num_recipes_by_author);
   test_map(authors_by_num_recipes);
+
+  // disk-backed data types
+  lava::init();
+
+
+  // new variable
+  lava::Ref<int> newref;
+  // existing variable
+  lava::Ref<int> ref(0);
+  std::cout << "newref = " << newref << "\n";
+  std::cout << "ref = " << ref << "\n";
+  newref = 42;
+  std::cout << "newref = " << newref << "\n";
+  std::cout << "ref = " << ref << "\n";
+
+  std::cerr << "lava::numids = " << lava::numids << "\n";
+  std::cerr << "*lava::numids = " << *lava::numids << "\n";
+  std::cerr << "gonna initiailize lavavector\n";
+  lava::Ref<std::vector<int>> lavavector;
+  std::cout << "lavavector.id = " << lavavector.id << "\n";
+  std::cout << "pushing back\n";
+  std::cout << "lavavector.size() = " << lavavector.size() << "\n";
+  lavavector.push_back(32);
+  std::cout << "pushed back\n";
+  std::cout << "lavavector.size() = " << lavavector.size() << "\n";
+  std::cout << "lavavector.at(0) = " << lavavector.at(0) << "\n";
+  // lava::Ref<std::vector<lava::Ref<std::vector<int>>>> lavavectorvector;
+  lava::Ref<std::vector<std::vector<int>>> lavavectorvector;
+  std::cerr << "initialized lavavectorvector\n";
+  // lavavectorvector.push_back({32, 43});
+  // lavavectorvector.push_back({32});
+  std::cout << "get lavavectorvector size\n";
+  std::cout << "lavavectorvector.size() = " << lavavectorvector.size() << "\n";
+  // std::cout << "lavavectorvector.at(0).at(0) = " << lavavectorvector.at(0).at(0) << "\n";
+  // std::cout << "lavavectorvector.at(0).at(1) = " << lavavectorvector.at(0).at(1) << "\n";
+  // std::cout << "lavavectorvector.at(1).at(0) = " << lavavectorvector.at(1).at(0) << "\n";
+  // std::cout << "lavavectorvector.at(1).size() = " << lavavectorvector.at(1).size() << "\n";
+  // std::cout << "lavavectorvector.at(1).id = " << lavavectorvector.at(1).id << "\n";
 }

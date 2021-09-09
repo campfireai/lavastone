@@ -16,6 +16,11 @@
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/type_index.hpp>
 
+
+#include "leveldb/db.h"
+namespace kvdb=leveldb;
+
+
 static std::string Pack(const std::string *data) { return *data; }
 
 template <typename T>
@@ -74,40 +79,49 @@ static void Unpack(const std::string_view &data, std::vector<T> *vp) {
 }
 
 // unpack via vector
-#define UNPACK_1D_CONTAINER(TVEC, APPEND)                                      \
-  template <typename T>                                                        \
-  static void Unpack(const std::string_view &data, TVEC<T> *vp) {              \
-    std::vector<T> vdata;                                                      \
-    Unpack(data, &vdata);                                                      \
-    for (auto elem : vdata)                                                    \
-      vp->APPEND(elem);                                                        \
+template <template <typename, typename...> typename Collection, typename T, typename... Args>
+static void Unpack(const std::string_view &data, Collection<T, Args...> *vp) {
+  std::vector<T> vdata;
+  Unpack(data, &vdata);
+  for (auto elem : vdata)
+    vp->insert(elem);
+}
+
+
+// detect map-like objects
+template <typename T, typename = void>
+struct is_begin_points_first : std::false_type {};
+template <typename T>
+struct is_begin_points_first<T, std::void_t<decltype(std::declval<T>().begin()->first)>> : std::true_type {};
+
+
+// // detect incrementable objects
+// template <typename T, typename = void>
+// struct has_operator : std::false_type {};
+// template <typename T>
+// struct has_operator<T, std::void_t<decltype(std::declval<T>().begin()->first)>> : std::true_type {};
+
+
+// unpack map-like objects
+template <template <typename, typename, typename...> typename Mapping, typename T1, typename T2, typename... Args>
+static void Unpack(const std::string_view &data, Mapping<T1, T2> *mp, typename std::enable_if<is_begin_points_first<Mapping<T1, T2, Args...>>::value>::type* dummy = 0) {
+  size_t i = 0;
+  while (i < data.size()) {
+    size_t kslen, vslen;
+    Unpack(data.substr(i, sizeof(kslen)), &kslen);
+    i += sizeof(kslen);
+    T1 k;
+    Unpack(data.substr(i, kslen), &k);
+    i += kslen;
+    Unpack(data.substr(i, sizeof(vslen)), &vslen);
+    i += sizeof(vslen);
+    T2 v;
+    Unpack(data.substr(i, vslen), &v);
+    i += vslen;
+    (*mp)[k] = v;
   }
+}
 
-UNPACK_1D_CONTAINER(std::unordered_set, insert);
-UNPACK_1D_CONTAINER(std::set, insert);
-
-#define UNPACK_2D_CONTAINER(TMAP)                                              \
-  template <typename T1, typename T2>                                          \
-  static void Unpack(const std::string_view &data, TMAP<T1, T2> *mp) {         \
-    size_t i = 0;                                                              \
-    while (i < data.size()) {                                                  \
-      size_t kslen, vslen;                                                     \
-      Unpack(data.substr(i, sizeof(kslen)), &kslen);                           \
-      i += sizeof(kslen);                                                      \
-      T1 k;                                                                    \
-      Unpack(data.substr(i, kslen), &k);                                       \
-      i += kslen;                                                              \
-      Unpack(data.substr(i, sizeof(vslen)), &vslen);                           \
-      i += sizeof(vslen);                                                      \
-      T2 v;                                                                    \
-      Unpack(data.substr(i, vslen), &v);                                       \
-      i += vslen;                                                              \
-      (*mp)[k] = v;                                                            \
-    }                                                                          \
-  }
-
-UNPACK_2D_CONTAINER(std::unordered_map);
-UNPACK_2D_CONTAINER(std::map);
 
 template <typename T> static std::string PackData(const T *data) {
   std::string d(sizeof(T), L'\0');
@@ -142,12 +156,6 @@ std::string Pack(const Collection<T, Args...> *data) {
   return Pack(&vdata);
 }
 
-
-// detect map-like objects
-template <typename T, typename = void>
-struct is_begin_points_first : std::false_type {};
-template <typename T>
-struct is_begin_points_first<T, std::void_t<decltype(std::declval<T>().begin()->first)>> : std::true_type {};
 
 // pack map-like objects
 template <template <typename, typename, typename...> typename Mapping, typename T1, typename T2, typename... Args>
@@ -211,6 +219,228 @@ template <typename T> void unpack_from_file(std::string fname, T *obj) {
   }
   in.close();
   Unpack(std::string_view(packed), obj);
+}
+
+
+namespace lava {
+  kvdb::DB *db;
+  kvdb::Options options;
+  kvdb::Status s;
+  std::string path = "./kv";
+
+  std::atomic<size_t> atomic_lavaref_count{0};
+
+  void demand(bool cond, std::string str) {
+    if (!(cond)) {
+      std::cout << str << std::endl;
+      exit(1);
+    }
+  }
+
+  void put (const std::string key, const std::string value) {
+    assert(db->Put(kvdb::WriteOptions(), key, value).ok());
+  }
+
+  void get(const std::string key, std::string& value) {
+    s = db->Get(kvdb::ReadOptions(), key, &value);
+    demand(s.ok(), s.ToString());
+  }
+
+  template <typename T>
+  struct Ref;
+
+  Ref<size_t>* numids;
+
+
+  template <typename T>
+  struct Ref {
+    // key in kvstore
+    std::string id;
+    // cast to T type
+    operator T () const {
+      std::string result;
+      get(id, result);
+      T val;
+      ::Unpack(result, &val);
+      return val;
+    }
+    Ref<T>& operator= (const Ref<T>& v) {
+      // Guard self assignment
+      if (this == &v)
+        return *this;
+
+      // demand(false, "assign to literal ref");
+      id = v.id;
+      return *this;
+    }
+    Ref<T> operator++ (int) {
+      std::cerr << "here0\n";
+      T v = *this;
+      std::cerr << "here1\n";
+      *this = v+1;
+      std::cerr << "here2\n";
+      return v;
+    }
+    Ref<T>& operator= (const T& v) {
+      put(id, ::Pack(&v));
+      return *this;
+    }
+    Ref() {
+      std::cerr << "initialize literal Ref\n";
+      // for creating new key / empty ref
+      // set the Ref's id and then increment
+      std::cerr << "numids = " << numids << "\n";
+      std::cerr << "numids->id = " << numids->id << "\n";
+      std::cerr << "*numids = " << *numids << "\n";
+      std::cerr << "gonna get prev_num_ids\n";
+      size_t prev_num_ids = *numids;
+      std::cerr << "prev_num_ids = " << prev_num_ids << "\n";
+      // I think that
+      // for some reason when we set size_t prev_num_ids = (*numids)++
+      // the compiler casts to a size_t and then increments
+      (*numids)++;
+      id = ::Pack(&prev_num_ids);
+      std::cerr << "here0.0\n";
+      // initialize
+      *this = T();
+      std::cerr << "here0.1\n";
+    }
+    Ref(std::string id_) {
+      std::cout << "initialize literal ref with std::string id\n";
+      id = id_;
+    }
+    Ref(size_t id_) {
+      id = ::Pack(&id_);
+    }
+  };
+
+  void init() {
+    options.create_if_missing = true;
+    s = kvdb::DB::Open(options, path, &db);
+    demand(s.ok(), s.ToString());
+
+    std::cerr << "numids = " << numids << "\n";
+    numids = new Ref<size_t>("");
+    std::cerr << "numids = " << numids << "\n";
+    std::string result;
+    s = db->Get(kvdb::ReadOptions(), "", &result);
+    if (s.IsNotFound()) {
+      std::cout << "initializing numids = 0\n";
+      *numids = 0;
+      std::cerr << "*numids = " << *numids << "\n";
+      std::cerr << "numids->id = " << numids->id << "\n";
+    } else {
+      demand(s.ok(), s.ToString());
+      std::cout << "found existing numids = " << *numids << "\n";
+    }
+  }
+
+  // Ref to lavavector
+  template <template <typename, typename...> typename Collection, typename T, typename... Args>
+  struct Ref<Collection<T, Args...>> {
+    // key in kvstore
+    std::string id;
+    Ref<size_t> len;
+
+    Ref<T> at(size_t i) {
+      assert(i<len);
+      std::string result;
+      return Ref<T>(id + Pack(&i));
+    }
+    // cast to Collection<T, Args...> type
+    operator Collection<T, Args...> () const {
+      Collection<T, Args...> val;
+      demand(false, "unimplemented cast to collection");
+      for (size_t i=0; i<len; i++) {
+        val.insert(this->at(i));
+      }
+      return val;
+    }
+    Ref<Collection<T, Args...>>& operator= (const Ref<Collection<T, Args...>>& v) {
+      // Guard self assignment
+      if (this == &v)
+          return *this;
+      // std::cerr << "v = " << v << "\n";
+      demand(false, "assigned to another ref in collection");
+    }
+
+    Ref<Collection<T, Args...>>& operator= (const Collection<T, Args...>& v) {
+      demand(false, "unimplemented set equals to collection");
+      return *this;
+    }
+    size_t size() {
+      return len;
+    }
+    void push_back (const T& val) {
+      std::cout << "len.id = " << len.id << "\n";
+      std::cout << "id = " << id << "\n";
+      size_t i = len;
+      put(id + Pack(&i), Pack(&val));
+      len++;
+    }
+    void insert (const T& val) {
+      this->push_back(val);
+    }
+    Ref() {
+      std::cerr << "initialize container Ref\n";
+      // for creating new key / empty ref
+      // set id and increment
+      size_t prev_num_ids = *numids;
+      (*numids)++;
+      std::cerr << "prev_num_ids = " << prev_num_ids << "\n";
+      std::cerr << "herea.0\n";
+      id = Pack(&prev_num_ids);
+      std::cerr << "herea.1\n";
+      std::cout << "len.id = " << len.id << "\n";
+      size_t id_size_t;
+      Unpack(id, &id_size_t);
+      std::cout << "len.id = " << len.id << "\n";
+      std::cout << "id = " << id << "\n";
+      std::cout << "id_size_t = " << id_size_t << "\n";
+      len = Ref<size_t>(id);
+      std::cout << "len.id = " << len.id << "\n";
+      std::cout << "id = " << id << "\n";
+      std::cout << "id_size_t = " << id_size_t << "\n";
+      std::cerr << "herea.2\n";
+      len = 0;
+      std::cerr << "herea.3\n";
+    }
+    Ref<Collection<T, Args...>>(size_t id_) {
+      std::cerr << "initialize container with size_t id\n";
+      id = Pack(&id_);
+      len = Ref<size_t>(id_);
+    }
+    Ref<Collection<T, Args...>>(std::string id_) {
+      std::cerr << "initialize container with std::string id\n";
+      id = id_;
+      std::cerr << "declaring len ref with std::string id\n";
+      len = Ref<size_t>(id);
+      std::cerr << "finished initialize container with std::string id\n";
+    }
+  };
+
+  template<typename T>
+  std::string Pack(const Ref<T> *data) {
+    return data->id;
+  }
+
+  template<typename T>
+  void Unpack(const std::string_view &data, Ref<T> *r) {
+    *r = Ref<T>(data);
+  }
+
+
+  //
+  // // unpack map-like objects
+  // template <template <typename, typename, typename...> typename Mapping, typename T1, typename T2, typename... Args>
+  // static void Unpack(const std::string_view &data, Mapping<T1, T2> *mp, typename std::enable_if<is_begin_points_first<Mapping<T1, T2, Args...>>::value>::type* dummy = 0) {
+  // Ref<T2> ContainerRef<Mapping<T1, T2, Args...>>::operator[] () {
+  //
+  // }
+  // template<typename T>
+  // Ref::operator += (const T& v, std::enable_if<>::type* dummy = 0) {
+  //
+  // }
 }
 
 #endif
