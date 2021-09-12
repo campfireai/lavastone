@@ -243,9 +243,11 @@ namespace lava {
     Ref<T2> operator[](const T1& k) {
       std::string key = id + Pack(&k);
       // increment for new keys
-      if (!check_exists(key))
+      if (!check_exists(key)) {
+        Ref<T2> r(key);
+        r = T2();
         len++;
-
+      }
       return Ref<T2>(key);
     }
     Ref<T2> at (const T1& k) {

@@ -13,85 +13,6 @@ LAVASTONE_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
     exit(1);                                                                   \
   }
 
-void test_string(std::string foo) {
-  std::cout << "\nstoring string " << foo << "\n";
-  pack_to_file(&foo, "foo.string");
-  std::string foo_loaded;
-  unpack_from_file("foo.string", &foo_loaded);
-  std::cout << "loaded string " << foo_loaded << "\n\n";
-  demand(foo_loaded == foo, "string pack/unpack error");
-}
-
-template <typename T> void test_struct(T foo) {
-  std::cout << "\nstoring struct " << foo << "\n";
-  pack_to_file(&foo, "foo.struct");
-  T foo_loaded;
-  unpack_from_file("foo.struct", &foo_loaded);
-  std::cout << "loaded struct " << foo_loaded << "\n\n";
-  demand(foo_loaded == foo, "struct pack/unpack error");
-}
-
-template <typename T> void test_vector(std::vector<T> foo) {
-  auto start = std::chrono::steady_clock::now();
-  std::cout << "storing vector\n";
-  pack_to_file(&foo, "foo.vector");
-  auto end = std::chrono::steady_clock::now();
-  std::cout << "stored vector with " << foo.size() << " records in "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     start)
-                   .count()
-            << " µs\n";
-
-  std::vector<T> foo_loaded;
-
-  start = std::chrono::steady_clock::now();
-  unpack_from_file("foo.vector", &foo_loaded);
-  end = std::chrono::steady_clock::now();
-  std::cout << "loaded vector with " << foo.size() << " records in "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     start)
-                   .count()
-            << " µs\n";
-  demand(foo_loaded == foo, "vector pack/unpack error");
-}
-
-template <typename T> void test_fixed_width(T foo) {
-  std::cout << "storing value " << foo << " of fixed-width type\n";
-  pack_to_file(&foo, "foo.fixed_width");
-  T foo_loaded;
-  unpack_from_file("foo.fixed_width", &foo_loaded);
-  std::cout << "loaded value " << foo_loaded << " of fixed-width type\n";
-  demand(foo_loaded == foo, "fixed-width pack/unpack error");
-}
-
-template <typename T1, typename T2>
-void test_unordered_map(std::unordered_map<T1, T2> foo) {
-  std::cout << "storing unordered map\n";
-  pack_to_file(&foo, "foo.unordered_map");
-  std::unordered_map<T1, T2> foo_loaded;
-  unpack_from_file("foo.unordered_map", &foo_loaded);
-  std::cout << "loaded unordered map\n";
-  demand(foo_loaded == foo, "unordered_map pack/unpack error");
-}
-
-template <typename T> void test_set(std::set<T> foo) {
-  std::cout << "storing set\n";
-  pack_to_file(&foo, "foo.set");
-  std::set<T> foo_loaded;
-  unpack_from_file("foo.set", &foo_loaded);
-  std::cout << "loaded set\n";
-  demand(foo_loaded == foo, "set pack/unpack error");
-}
-
-template <typename T1, typename T2> void test_map(std::map<T1, T2> foo) {
-  std::cout << "storing map\n";
-  pack_to_file(&foo, "foo.map");
-  std::map<T1, T2> foo_loaded;
-  unpack_from_file("foo.map", &foo_loaded);
-  std::cout << "loaded map\n";
-  demand(foo_loaded == foo, "map pack/unpack error");
-}
-
 
 int main(int argc, char *argv[]) {
 
@@ -108,17 +29,37 @@ int main(int argc, char *argv[]) {
   }
   demand(num_records > 0, "no records to test with!");
 
+  auto recipes = random_recipes(num_records);
+  std::unordered_map<std::string, size_t> num_recipes_by_author;
+  lava::Ref<std::unordered_map<std::string, size_t>> num_recipes_by_author_ref;
+
+  for (auto r : recipes) {
+    auto key = r.author + " | " + r.author_location;
+    num_recipes_by_author[key]++;
+    num_recipes_by_author_ref[key]++;
+  }
+  std::unordered_map<std::string, size_t> loaded_num_recipes_by_author_ref = num_recipes_by_author_ref;
+  assert(num_recipes_by_author == loaded_num_recipes_by_author_ref);
+
+  std::map<size_t, std::vector<std::string>> authors_by_num_recipes;
+  lava::Ref<std::map<size_t, std::vector<std::string>>> authors_by_num_recipes_ref;
+  for (auto it : num_recipes_by_author) {
+    authors_by_num_recipes[it.second].push_back(it.first);
+    authors_by_num_recipes_ref[it.second].push_back(it.first);
+  }
+  std::map<size_t, std::vector<std::string>> loaded_authors_by_num_recipes_ref = authors_by_num_recipes_ref;
+  assert(authors_by_num_recipes == loaded_authors_by_num_recipes_ref);
+
   // specify ID to access persistent container across runs of the program
   lava::Ref<std::vector<recipe>> persistent_vector_ref(0);
-  // persistent_vector_ref = lava::Ref<std::vector<recipe>>(0);
 
   // if ID is not specified an ID will be chosen automatically
   lava::Ref<std::vector<recipe>> vector_ref;
 
   std::cout << "vector_ref.size() = " << vector_ref.size() << "\n";
   std::cout << "persistent_vector_ref.size() = " << persistent_vector_ref.size() << "\n";
-  vector_ref = random_recipes(num_records);
-  for (auto r: random_recipes(num_records)) {
+  vector_ref = recipes;
+  for (auto r: recipes) {
     vector_ref.push_back(r);
     persistent_vector_ref.push_back(r);
   }
