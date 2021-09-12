@@ -18,7 +18,7 @@ static const std::vector<std::string> nouns = {
     "Salad",          "Pancake", "Sausage", "Beans",  "Pork",
     "Liver",          "Brittle", "Bombé",   "Jelly",  "Salad",
     "Bluegill",       "Platter", "Punch",   "Loaf",   "Breadsticks",
-    "Mushroom Sauté", "Filet",   "Cobb",    "Chow"};
+    "Mushroom Sauté", "Filet",   "Cobb",    "Chow",   "Surprise"};
 static const std::vector<std::string> titles = {
     "Grandpapa",  "Grandmama",   "Professor",   "Granddaughter", "Grandmaster",
     "Grandson",   "Grandniece",  "Grandnephew", "Uncle",         "Auntie",

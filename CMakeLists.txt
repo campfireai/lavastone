@@ -63,6 +63,7 @@ add_library(gendata STATIC gendata.cpp)
 
 set(LIBS ${LIBS} gendata pthread dl)
 add_executable(test_gendata test_gendata.cpp)
+add_executable(test_lavapack test_lavapack.cpp)
 add_executable(test_lavastone test_lavastone.cpp)
 
 if (BOOST_SERIALIZATION MATCHES TRUE)
@@ -73,4 +74,5 @@ else()
 endif(BOOST_SERIALIZATION MATCHES TRUE)
 
 target_link_libraries(test_gendata PUBLIC ${LIBS})
+target_link_libraries(test_lavapack PUBLIC ${LIBS})
 target_link_libraries(test_lavastone PUBLIC ${LIBS})

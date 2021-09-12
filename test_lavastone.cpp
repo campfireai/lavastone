@@ -1,4 +1,7 @@
 #include "gendata.hpp"
+#include "lavapack.hpp"
+// this must be invoked once to allow (de)serialization of this struct type
+LAVASTONE_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
 #include "lavastone.hpp"
 #include <chrono>
 #include <iostream>
@@ -89,10 +92,11 @@ template <typename T1, typename T2> void test_map(std::map<T1, T2> foo) {
   demand(foo_loaded == foo, "map pack/unpack error");
 }
 
-// this must be invoked once to allow (de)serialization of this struct type
-LAVASTONE_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
 
 int main(int argc, char *argv[]) {
+
+  // test of disk-backed data types
+  lava::init();
 
   size_t num_records;
   if (argc != 2) {
@@ -104,62 +108,105 @@ int main(int argc, char *argv[]) {
   }
   demand(num_records > 0, "no records to test with!");
 
-  auto recipes = random_recipes(num_records);
-  std::unordered_map<std::string, size_t> num_recipes_by_author;
-  // build a fake index to test map serialization
-  for (auto r : recipes)
-    num_recipes_by_author[r.author + " | " + r.author_location]++;
+  // specify ID to access persistent container across runs of the program
+  lava::Ref<std::vector<recipe>> persistent_vector_ref(0);
+  // persistent_vector_ref = lava::Ref<std::vector<recipe>>(0);
 
-  std::map<size_t, std::set<std::string>> authors_by_num_recipes;
-  for (auto it : num_recipes_by_author) {
-    authors_by_num_recipes[it.second].insert(it.first);
+  // if ID is not specified an ID will be chosen automatically
+  lava::Ref<std::vector<recipe>> vector_ref;
+
+  std::cout << "vector_ref.size() = " << vector_ref.size() << "\n";
+  std::cout << "persistent_vector_ref.size() = " << persistent_vector_ref.size() << "\n";
+  vector_ref = random_recipes(num_records);
+  for (auto r: random_recipes(num_records)) {
+    vector_ref.push_back(r);
+    persistent_vector_ref.push_back(r);
+  }
+  recipe final_elem = vector_ref.at(vector_ref.size()-1);
+  recipe final_persistent_elem = persistent_vector_ref.at(persistent_vector_ref.size()-1);
+  std::cout << "final recipe title = " << final_elem.title << "\n";
+  std::cout << "final persistent recipe title = " << final_persistent_elem.title << "\n";
+
+
+  lava::Ref<std::string> string_ref;
+  string_ref = "456def";
+  std::string loaded_string_ref = string_ref;
+  std::cerr << "string_ref = " << loaded_string_ref << "\n";
+
+  lava::Ref<std::vector<std::vector<std::string>>> vecvecstring_ref;
+  lava::Ref<std::vector<std::string>> vecstring_ref;
+  std::vector<std::string> vecstring;
+
+  vecstring.push_back("hello");
+  vecstring.push_back("RAM");
+  vecstring_ref.push_back("hello");
+  vecstring_ref.push_back("DISK");
+  vecvecstring_ref.push_back(vecstring);
+  vecvecstring_ref.push_back(vecstring_ref);
+  vecvecstring_ref.push_back({});
+  vecvecstring_ref.at(2).push_back("hello");
+  vecvecstring_ref.at(2).push_back("WORLD");
+  vecvecstring_ref.at(2).push_back("!");
+  std::cout << "vecvecstring_ref.size() = " << vecvecstring_ref.size() << "\n";
+  for (size_t i=0; i<vecvecstring_ref.size(); i++) {
+    for (size_t j=0; j<vecvecstring_ref.at(i).size(); j++) {
+      std::cout << "vecvecstring_ref.at("<<i<<").at("<<j<<") = " << std::string(vecvecstring_ref.at(i).at(j)) << "\n";
+    }
   }
 
-  std::set<int> a_set = {1, 2, 3, 4, 5};
+  lava::Ref<std::unordered_map<std::string, std::string>> mapstring_ref;
+  mapstring_ref["pudding"] = "delicious";
+  std::cout << "mapstring_ref[\"pudding\"] = " << std::string(mapstring_ref["pudding"]) << "\n";
+  std::unordered_map<std::string, std::string> loaded_mapstring_ref = mapstring_ref;
+  std::cout << "loaded_mapstring_ref.size() = " << loaded_mapstring_ref.size() << "\n";
+  std::cout << "loaded_mapstring_ref[\"pudding\"] = " << loaded_mapstring_ref["pudding"] << "\n";
 
-  test_string(recipes.at(0).title);
-  test_struct(recipes.at(0));
-  test_vector(recipes);
-  test_fixed_width(recipes.size());
-  test_set(a_set);
-  test_unordered_map(num_recipes_by_author);
-  test_map(authors_by_num_recipes);
-
-  // disk-backed data types
-  lava::init();
+  lava::Ref<std::unordered_map<size_t, size_t>> mapint_ref;
+  mapint_ref[12] = 24;
+  std::cout << "mapint_ref[12] = " << mapint_ref[12] << "\n";
 
 
-  // new variable
-  lava::Ref<int> newref;
-  // existing variable
-  lava::Ref<int> ref(0);
-  std::cout << "newref = " << newref << "\n";
-  std::cout << "ref = " << ref << "\n";
-  newref = 42;
-  std::cout << "newref = " << newref << "\n";
-  std::cout << "ref = " << ref << "\n";
+  lava::Ref<std::unordered_map<std::string, std::unordered_map<std::string, std::string>>> deep_map_ref;
+  deep_map_ref["abc"]["123"] = "hello world";
+  std::cerr<<"deep_map_ref.at(\"abc\").at(\"123\") = " << std::string(deep_map_ref.at("abc").at("123")) << "\n";
+  std::cerr << "deep_map_ref.at(\"abc\").size() = " << deep_map_ref.at("abc").size() << "\n";
 
-  std::cerr << "lava::numids = " << lava::numids << "\n";
-  std::cerr << "*lava::numids = " << *lava::numids << "\n";
-  std::cerr << "gonna initiailize lavavector\n";
-  lava::Ref<std::vector<int>> lavavector;
-  std::cout << "lavavector.id = " << lavavector.id << "\n";
-  std::cout << "pushing back\n";
-  std::cout << "lavavector.size() = " << lavavector.size() << "\n";
-  lavavector.push_back(32);
-  std::cout << "pushed back\n";
-  std::cout << "lavavector.size() = " << lavavector.size() << "\n";
-  std::cout << "lavavector.at(0) = " << lavavector.at(0) << "\n";
-  // lava::Ref<std::vector<lava::Ref<std::vector<int>>>> lavavectorvector;
-  lava::Ref<std::vector<std::vector<int>>> lavavectorvector;
-  std::cerr << "initialized lavavectorvector\n";
-  // lavavectorvector.push_back({32, 43});
-  // lavavectorvector.push_back({32});
-  std::cout << "get lavavectorvector size\n";
-  std::cout << "lavavectorvector.size() = " << lavavectorvector.size() << "\n";
-  // std::cout << "lavavectorvector.at(0).at(0) = " << lavavectorvector.at(0).at(0) << "\n";
-  // std::cout << "lavavectorvector.at(0).at(1) = " << lavavectorvector.at(0).at(1) << "\n";
-  // std::cout << "lavavectorvector.at(1).at(0) = " << lavavectorvector.at(1).at(0) << "\n";
-  // std::cout << "lavavectorvector.at(1).size() = " << lavavectorvector.at(1).size() << "\n";
-  // std::cout << "lavavectorvector.at(1).id = " << lavavectorvector.at(1).id << "\n";
+  lava::Ref<
+    std::unordered_map<
+      std::string,
+      std::unordered_map<
+        size_t,
+        std::vector<
+          std::unordered_map<
+            int,
+            std::string
+          >
+        >
+      >
+    >
+  > deep_datastructure;
+
+  deep_datastructure["abc"][123].push_back({});
+  deep_datastructure["abc"][123].at(0)[99] = std::string(string_ref);
+  deep_datastructure["abc"][123].push_back({{42, "oh YEAH"}});
+
+  std::cerr << "deep_datastructure[\"abc\"][123].at(0).at(99) = " << std::string(deep_datastructure["abc"][123].at(0).at(99)) << "\n";
+  std::cerr << "deep_datastructure[\"abc\"][123].at(0).at(99) = " << std::string(deep_datastructure["abc"][123].at(1).at(42)) << "\n";
+  std::cerr << "deep_datastructure.at(\"abc\")(123).at(0).at(99) = " << std::string(deep_datastructure.at("abc").at(123).at(1).at(42)) << "\n";
+
+  std::unordered_map<
+    std::string,
+    std::unordered_map<
+      size_t,
+      std::vector<
+        std::unordered_map<
+          int,
+          std::string
+        >
+      >
+    >
+  > loaded_deep_datastructure = deep_datastructure;
+  assert(loaded_deep_datastructure.size() == deep_datastructure.size());
+
+  std::cout << "all tests passed\n";
 }
