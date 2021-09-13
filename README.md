@@ -2,7 +2,29 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
-TL;DR: Serialize huge container datastructures to a key-value store, allowing fast read-only disk-backed access in production?
+Lavastone aims to implement standard-library containers transparently backed by disk, using [LevelDB](https://github.com/google/leveldb) as a storage backend.
+
+_Replace this:_
+```c++
+vector<string> myvec;
+myvec.push_back("hello, world!\n");
+std::cout << myvec.at(0);
+```
+_with this:_
+```c++
+lava::Ref<vector<...> myvec
+myvec.push_back("hello, world!\n");
+std::cout << myvec.at(0);
+```
+_How does this work?_
+There are several techniques that go into this.
+- The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
+- An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
+- [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
+
+
+
+TL;DR: Serialize huge container datastructures to a key-value store (LevelDB), allowing fast disk-backed access in production.
 
 Serialize and deserialize C++ variables with Lavastone!
 Why would you use our 200-line header file?
