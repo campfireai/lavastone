@@ -2,6 +2,26 @@
 #define __LAVASTONE_HPP__
 
 #include "lavapack.hpp"
+#include <cstddef>
+#include <initializer_list>
+#include <fstream>
+#include <type_traits>
+#include <iostream>
+#include <type_traits>
+#include <string>
+#include <memory>
+#include <sstream>
+#include <algorithm>
+#include <string_view>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
+#include <vector>
+
+#include <boost/fusion/adapted/struct.hpp>
+#include <boost/fusion/include/for_each.hpp>
+#include <boost/type_index.hpp>
 
 
 #include "leveldb/db.h"
@@ -152,6 +172,32 @@ namespace lava {
     std::string id;
     Ref<size_t> len;
 
+    // to avoid unnecessary disk access and wasting top-level kv ids, we must include the len member in the constructor intializer list which avoids default construction w/o arguments that would auto-select a key
+    Ref() : len{""} {
+      // std::cerr << "initialize container Ref\n";
+      // for creating new key / empty ref
+      // set id and increment
+      size_t prev_num_ids = *numids;
+      (*numids)++;
+      id = Pack(&prev_num_ids);
+      len.id = id;
+      len = 0;
+    }
+    Ref(size_t id_) : len{""} {
+      // std::cerr << "initialize container with size_t id\n";
+      id = Pack(&id_);
+      len.id = id;
+
+      // if not exists, initialize the len
+      size_t zero = 0;
+      put_if_not_exists(len.id, Pack(&zero));
+    }
+    Ref(std::string id_) : id{id_}, len{id_} {
+      // if not exists, initialize the len
+      size_t zero = 0;
+      put_if_not_exists(len.id, Pack(&zero));
+    }
+
     Ref<T> operator[](const size_t& i) {
       return Ref<T>(id + Pack(&i));
     }
@@ -193,31 +239,6 @@ namespace lava {
     }
     void insert (const T& val) {
       this->push_back(val);
-    }
-    // to avoid unnecessary disk access and wasting top-level kv ids, we must include the len member in the constructor intializer list which avoids default construction w/o arguments that would auto-select a key
-    Ref() : len{""} {
-      // std::cerr << "initialize container Ref\n";
-      // for creating new key / empty ref
-      // set id and increment
-      size_t prev_num_ids = *numids;
-      (*numids)++;
-      id = Pack(&prev_num_ids);
-      len.id = id;
-      len = 0;
-    }
-    Ref<Collection<T, Args...>>(size_t id_) : len{""} {
-      // std::cerr << "initialize container with size_t id\n";
-      id = Pack(&id_);
-      len.id = id;
-
-      // if not exists, initialize the len
-      size_t zero = 0;
-      put_if_not_exists(len.id, Pack(&zero));
-    }
-    Ref<Collection<T, Args...>>(std::string id_) : id{id_}, len{id_} {
-      // if not exists, initialize the len
-      size_t zero = 0;
-      put_if_not_exists(len.id, Pack(&zero));
     }
   };
 
@@ -329,7 +350,7 @@ namespace lava {
       len.id = id;
       len = 0;
     }
-    Ref<Mapping<T1, T2, Args...>>(size_t id_) : len{""} {
+    Ref(size_t id_) : len{""} {
       // std::cerr << "initialize mapping with size_t id\n";
       id = Pack(&id_);
       len.id = id;
@@ -337,7 +358,7 @@ namespace lava {
       size_t zero = 0;
       put_if_not_exists(len.id, Pack(&zero));
     }
-    Ref<Mapping<T1, T2, Args...>>(std::string id_) : id{id_}, len{id_} {
+    Ref(std::string id_) : id{id_}, len{id_} {
       // if not exists, initialize the len
       size_t zero = 0;
       put_if_not_exists(len.id, Pack(&zero));

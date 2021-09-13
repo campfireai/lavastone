@@ -21,7 +21,18 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt update
-        sudo apt install build-essential cmake libleveldb-dev libzstd-dev libboost-dev libboost-serialization-dev
+        sudo apt install build-essential cmake libleveldb-dev \
+          libzstd-dev libboost-dev libboost-serialization-dev \
+          libsnappy-dev sqlite3 \
+          git
+        git clone --recursive https://github.com/google/leveldb.git
+        cd leveldb
+        git checkout 99b3c03b3284f5886f9ef9a4ef703d57373e61be
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        cmake --build . --parallel
+        sudo make install
     - name: Install dependencies on Mac
       if: runner.os == 'macOS'
       run: |
