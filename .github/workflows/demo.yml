@@ -22,8 +22,8 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential cmake libleveldb-dev \
-          libzstd-dev libboost-dev libboost-serialization-dev \
-          libsnappy-dev sqlite3 \
+          librocksdb-dev libzstd-dev libboost-dev \
+          libboost-serialization-dev libsnappy-dev sqlite3 \
           git
         git clone --recursive https://github.com/google/leveldb.git
         cd leveldb

@@ -49,6 +49,8 @@ _deps
 # Build dirs
 build.debug/*
 build/*
+build.rocksdb/*
+build.leveldb/*
 
 # mac ds store files
 .DS_Store
