@@ -22,6 +22,22 @@ There are several techniques that go into this.
 - An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
 - [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
 
+_Why would you use this?_
+Imagine you implemnted some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
+Or alteratively, you used to run it on smaller datasets and the dataset has outgrown your memory space.
+My favorite use case, however, is very fast checkpoint-resume. By doing this:
+```
+lava::Ref<MyComplicatedType> mydata_ondisk(0);
+mydata_ondisk= mydata_inmemory;
+```
+you chose a unique identifier for your datastructure which will persist across runs.
+If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and potentially with acceptable slowdown.
+
+Ideas to extend Lavastone:
+- Implement caching, flushing
+- Optimize leveldb seek for prefix traversal in lava::Ref<map> --> map conversion
+- Allow deletion of keys, resizing etc. for all types
+- Implement unordered_sets, sets, and ordered maps properly
 
 
 TL;DR: Serialize huge container datastructures to a key-value store (LevelDB), allowing fast disk-backed access in production.
