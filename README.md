@@ -1,8 +1,8 @@
 # lavastone 🌋🪨
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
-Lavastone aims to implement standard-library containers transparently backed by disk, using [LevelDB](https://github.com/google/leveldb) as a storage backend.
+Lavastone aims to implement standard-library containers transparently backed by disk, using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
 
 _Replace this:_
 ```c++
@@ -33,12 +33,16 @@ mydata_ondisk= mydata_inmemory;
 you chose a unique identifier for your datastructure which will persist across runs.
 If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and potentially with acceptable slowdown.
 
+
+
 Ideas to extend Lavastone:
 - Implement caching, flushing
 - Optimize leveldb seek for prefix traversal in lava::Ref<map> --> map conversion
 - Allow deletion of keys, resizing etc. for all types
 - Implement unordered_sets, sets, and ordered maps properly
 
+Benchmarks
+## Todo -- compare RocksDB and LevelDB perf, more systemized test suite, csv logging
 
 TL;DR: Serialize huge container datastructures to a key-value store (LevelDB), allowing fast disk-backed access in production.
 
