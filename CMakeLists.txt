@@ -15,6 +15,14 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall ")
 endif(CMAKE_BUILD_TYPE MATCHES debug)
 
+if (KVDB MATCHES rocksdb)
+  message("building with RocksDB key-value store backend")
+  add_definitions(-DUSE_ROCKSDB)
+else()
+  message("building with LevelDB key-value store backend")
+endif(KVDB MATCHES rocksdb)
+
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 include_directories(/usr/local/include include/)
@@ -40,6 +48,14 @@ else()
     message("not building boost benchmark due to missing boost_serialization lib")
 endif(Boost_SERIALIZATION_FOUND)
 
+find_package(ROCKSDB)
+if (ROCKSDB_LIBRARIES MATCHES NOTFOUND)
+  message("RocksDB not found, building without it")
+else()
+  include_directories(${ROCKSDB_INCLUDE_DIRS})
+  set(LIBS ${LIBS} ${ROCKSDB_LIBRARIES})
+endif (ROCKSDB_LIBRARIES MATCHES NOTFOUND)
+
 find_package(LEVELDB)
 if (LEVELDB_LIBRARIES MATCHES NOTFOUND)
   message("LevelDB not found, building without it")
@@ -63,6 +79,16 @@ else()
   include_directories(${ZSTD_INCLUDE_DIRS})
   set(LIBS ${LIBS} ${ZSTD_LIBRARIES})
 endif(ZSTD_LIBRARIES MATCHES NOTFOUND)
+
+if (KVDB MATCHES rocksdb)
+  if (ROCKSDB_LIBRARIES MATCHES NOTFOUND)
+    error("missing RocksDB library and KVDB set to rocksdb")
+  endif (ROCKSDB_LIBRARIES MATCHES NOTFOUND)
+else()
+  if (LEVELDB_LIBRARIES MATCHES NOTFOUND)
+    error("missing LevelDB library and KVDB set to leveldb (default)")
+  endif (LEVELDB_LIBRARIES MATCHES NOTFOUND)
+endif (KVDB MATCHES rocksdb)
 
 
 link_directories(/usr/local/lib)

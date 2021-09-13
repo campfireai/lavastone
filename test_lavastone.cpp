@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
   // specify ID to access persistent container across runs of the program
   lava::Ref<std::vector<recipe>> persistent_vector_ref(0);
 
+
   // if ID is not specified an ID will be chosen automatically
   lava::Ref<std::vector<recipe>> vector_ref;
 

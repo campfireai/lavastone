@@ -23,10 +23,14 @@
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/type_index.hpp>
 
-
-#include "leveldb/db.h"
-namespace kvdb = leveldb;
-
+#ifndef USE_ROCKSDB
+#define USE_ROCKSDB
+  #include "leveldb/db.h"
+  namespace kvdb = leveldb;
+#else
+  #include "rocksdb/db.h"
+  namespace kvdb = rocksdb;
+#endif
 
 namespace lava {
   kvdb::DB *db;
