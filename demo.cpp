@@ -4,10 +4,10 @@
 #include <string>
 
 #include "lavapack.hpp"
-struct {
+struct my_struct {
   int my_int;
   std::string my_string;
-} my_struct;
+};
 // this must be invoked once to allow (de)serialization of this struct type
 LAVAPACK_ADAPT_STRUCT(my_struct, my_int, my_string);
 #include "lavastone.hpp"
