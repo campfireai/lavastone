@@ -19,7 +19,7 @@ LAVAPACK_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
     code;                                                                      \
     auto end = std::chrono::steady_clock::now();                               \
     std::cout << str                                                           \
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -   \
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end -   \
                                                                        start)  \
                      .count()                                                  \
               << "\n";                                                         \
@@ -45,30 +45,32 @@ int main(int argc, char *argv[]) {
       name_to_num_likes_to_recipes;
   lava::Ref<decltype(name_to_num_likes_to_recipes)>
       name_to_num_likes_to_recipes_ref;
+  lava::Ref<decltype(recipes)> recipes_ref;
 
+  timeit(recipes_ref = recipes;, "vector_bulk_insert_disk_ms=");
   timeit(
       for (auto r
            : recipes) {
         name_to_num_likes_to_recipes[r.author][r.num_likes].push_back(r);
       },
-      "random_insert_memory_us=")
+      "map_random_insert_memory_ms=");
 
-      timeit(
-          for (auto r
-               : recipes) {
-            name_to_num_likes_to_recipes_ref[r.author][r.num_likes].push_back(
-                r);
-          },
-          "random_insert_disk_us=")
+  timeit(
+      for (auto r
+           : recipes) {
+        name_to_num_likes_to_recipes_ref[r.author][r.num_likes].push_back(r);
+      },
+      "map_random_insert_disk_ms=");
 
-          lava::Ref<decltype(name_to_num_likes_to_recipes)>
-              name_to_num_likes_to_recipes_ref_bulk;
+  lava::Ref<decltype(name_to_num_likes_to_recipes)>
+      name_to_num_likes_to_recipes_ref_bulk;
   timeit(name_to_num_likes_to_recipes_ref_bulk = name_to_num_likes_to_recipes;
-         , "copy_memory_to_disk_us=") decltype(name_to_num_likes_to_recipes)
-      recovered_1;
+         , "map_bulk_memory_to_disk_ms=");
+  decltype(name_to_num_likes_to_recipes) recovered_1;
   timeit(recovered_1 = name_to_num_likes_to_recipes_ref;
-         , "copy_disk_to_memory_us=") decltype(name_to_num_likes_to_recipes)
-      recovered_2 = name_to_num_likes_to_recipes_ref_bulk;
+         , "map_bulk_disk_to_memory_ms=");
+  decltype(name_to_num_likes_to_recipes) recovered_2 =
+      name_to_num_likes_to_recipes_ref_bulk;
   assert(recovered_1 == recovered_2 &&
          recovered_2 == name_to_num_likes_to_recipes);
 
@@ -83,17 +85,17 @@ int main(int argc, char *argv[]) {
         for (auto r : some_recipes)
           total_chars += r.title.size();
       },
-      "random_access_memory_us=")
+      "map_random_access_memory_ms=");
 
-          timeit(
-              for (size_t i = 0; i < num_records; i++) {
-                size_t j = std::rand() % num_records;
-                std::vector<recipe> some_recipes =
-                    name_to_num_likes_to_recipes_ref[recipes[j].author]
-                                                    [recipes[j].num_likes];
-                for (auto r : some_recipes)
-                  total_chars += r.title.size();
-              },
-              "random_access_disk_us=") std::cout
-      << "total_chars = " << total_chars << "\n";
+  timeit(
+      for (size_t i = 0; i < num_records; i++) {
+        size_t j = std::rand() % num_records;
+        std::vector<recipe> some_recipes =
+            name_to_num_likes_to_recipes_ref[recipes[j].author]
+                                            [recipes[j].num_likes];
+        for (auto r : some_recipes)
+          total_chars += r.title.size();
+      },
+      "map_random_access_disk_ms=");
+  std::cout << "total_chars = " << total_chars << "\n";
 }
