@@ -1,4 +1,3 @@
-#include "gendata.hpp"
 #include "lavastone.hpp"
 #include <chrono>
 #include <iostream>

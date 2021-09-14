@@ -131,11 +131,11 @@ void init() {
   std::string result;
   s = db->Get(kvdb::ReadOptions(), "", &result);
   if (s.IsNotFound()) {
-    std::cout << "initializing numids = 0\n";
+    std::cout << "initializing lava::numids = 0\n";
     *numids = 0;
   } else {
     demand(s.ok(), s.ToString());
-    std::cout << "found existing numids = " << *numids << "\n";
+    std::cout << "found existing lava::numids = " << *numids << "\n";
   }
   is_initialized=true;
 }
