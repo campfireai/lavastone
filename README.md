@@ -238,7 +238,6 @@ MyStruct foo_new;
 unpack_from_file("foo.struct", &foo_new);
 ```
 
-### Usage
 The `pack_to_file` and `unpack_from_file` convenience functions simply wrap the core serialization engine, which consists of a library of `Pack` and `Unpack` functions implemented for various fixed-width and container types.
 Use these methods to access the raw strings that Lavastone serializes to / from.
 
