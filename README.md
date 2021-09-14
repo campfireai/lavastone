@@ -1,6 +1,7 @@
 # lavastone 🌋
-[![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
+[![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
+
 
 Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) containing arbitrary serializable types.
 Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code written for memory-backed STL containers can be trivially adapted to use the disk once the dataset has outgrown RAM.
