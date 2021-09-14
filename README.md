@@ -4,7 +4,7 @@
 
 
 Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) containing arbitrary serializable types.
-Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code written for memory-backed STL containers can be trivially adapted to use the disk once the dataset has outgrown RAM.
+Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM.
 
 ___Replace this:___
 ```c++
