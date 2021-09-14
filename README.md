@@ -3,7 +3,7 @@
 [![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 
 
-Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) containing arbitrary serializable types.
+Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) for arbitrary serializable types.
 Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM. For our use case, pre-processing our big dataset in memory with C++ and then writing to disk with Lavastone finished in ~1 hour and  we could then spin up cheap disk-backed servers instantly. On the other hand, performing all the indexing directly with a SQL database would take weeks.
 
 ___Just replace this:___
@@ -44,7 +44,7 @@ int main() {
 - unordered_map &mdash; fully supported
 - vector &mdash; fully supported
 - map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization [see below](#extending-to-other-data-types)
-- set, unordered set are treated as vectors i.e. lack uniqueness guarantees
+- set, unordered set are treated as vectors i.e. lack uniqueness guarantees (we didn't need these structures but they would be really simple to implement along the lines of the `lava::Ref<Mapping<...>>` if someone wants to open a PR!)
 
 In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM. Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see benchmarks) of about 16x in our tests.
 
