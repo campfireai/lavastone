@@ -6,7 +6,7 @@
 Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) containing arbitrary serializable types.
 Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM.
 
-___Replace this:___
+___Just replace this:___
 ```c++
 vector<string> myvec;
 myvec.push_back("hello, world!\n");
