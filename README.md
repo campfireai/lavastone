@@ -67,6 +67,19 @@ You could also replace it with
 Please see the docs below to [get started](#compile-and-run-tests).
 
 ## Getting Started
+### Install dependencies
+#### Mac OS
+```bash
+brew install cmake leveldb rocksdb zstd
+```
+#### Ubuntu
+```bash
+apt install -y build-essential cmake \
+  libleveldb-dev librocksdb-dev libsnappy-dev \
+  libzstd-dev libboost-dev \
+  libboost-serialization-dev \
+  git
+```
 ### Compile and run tests
 ```bash
 git clone https://github.com/campfireai/lavastone.git
