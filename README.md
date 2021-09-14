@@ -4,26 +4,26 @@
 
 Lavastone aims to provide transparently disk-backed standard-library containers (vector, unordered_map etc.), using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
 
-_Replace this:_
+___Replace this:___
 ```c++
 vector<string> myvec;
 myvec.push_back("hello, world!\n");
 std::cout << myvec.at(0);
 ```
-_with this:_
+___with this:___
 ```c++
 lava::Ref<vector<...> myvec
 myvec.push_back("hello, world!\n");
 std::cout << myvec.at(0);
 ```
 
-_How does this work?_
+___How does this work?___
 There are several techniques that go into this.
 - The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
 - An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
 - [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
 
-_Why would you use this?_
+___Why would you use this?___
 Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
 Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
 My favorite use case, however, is very fast checkpoint-resume. By doing this:
@@ -62,20 +62,6 @@ You could also replace it with
 
 Please see the docs below to [get started](#compile-and-run-tests).
 
-## FAQ
-*Q: Why not use a database like SQLite or LevelDB?*
-
-*A:* Using a database  generally requires rewriting your code, such that it no longer works if you were to operate on in-memory data structures (std::vector, std::unordered_map etc.).
-The goal of Lavastone is to provide transparently disk-backed standard library containers that you can swap in whenever you find it helpful to have your data stored on disk. You may also get better performance with Lavastone than with (say) an uncompressed SQLite database due to LevelDB's (or RocksDB's) compression.
-
-*Q: Why not use [STXXL](https://stxxl.org/)*
-
-*A:* STXXL supports POD types only, so it does not play nicely with strings or other non-POD ilk.
-
-*Q: Why implement serialization / deserialization instead of using [Boost serialization](https://www.boost.org/doc/libs/1_75_0/libs/serialization/doc/tutorial.html)*
-
-*A:*  This way it's self-contained (using only the BTL to [support arbitrary structs](#adapting-a-custom-struct-type)), and in some cases faster (due to lack of metadata / being purely type-driven. But more importantly, we weren't familiar with the Boost serialization libraries at the start of this project. You could absolutely replace lavapack's (Un)Pack functions with boost (de)serialization and get better performance in a lot of cases.
-
 ## Getting Started
 ### Compile and run tests
 ```bash
@@ -94,8 +80,21 @@ cmake --build . --parallel
 
 ### Configuration options
 - `cmake -DCMAKE_BUILD_TYPE=debug` disable aggressive optimizations
-- `cmake -DKVDB=rocksdb` use RocksDB instead of the default LevelDB key-value store
+- `cmake -DKVDB=rocksdb` use RocksDB instead of the default LevelDB key-value store backend
 
+## FAQ
+___Q: Why not use a database like SQLite or LevelDB directly?___
+
+___A:___ Using a database  generally requires rewriting your code, such that it no longer works if you were to operate on in-memory data structures (std::vector, std::unordered_map etc.).
+The goal of Lavastone is to provide transparently disk-backed standard library containers that you can swap in whenever you find it helpful to have your data stored on disk. You may also get better performance with Lavastone than with (say) an uncompressed SQLite database due to LevelDB's (or RocksDB's) compression.
+
+___Q: Why not use [STXXL](https://stxxl.org/)___
+
+___A:___ STXXL supports POD types only, so it does not play nicely with strings or other non-POD ilk.
+
+___Q: Why implement serialization / deserialization from scratch instead of using [Boost serialization](https://www.boost.org/doc/libs/1_75_0/libs/serialization/doc/tutorial.html)___
+
+___A:___  This way it's self-contained (using only the BTL to [support arbitrary structs](#adapting-a-custom-struct-type)), and in some cases faster (due to lack of metadata / being purely type-driven. But more importantly, we weren't familiar with the Boost serialization libraries at the start of this project. You could absolutely replace lavapack's (Un)Pack functions with boost (de)serialization and get better performance in a lot of cases.
 
 
 ## Adding custom data type support to Lavapack
