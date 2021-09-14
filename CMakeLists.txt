@@ -82,11 +82,11 @@ endif(ZSTD_LIBRARIES MATCHES NOTFOUND)
 
 if (KVDB MATCHES rocksdb)
   if (ROCKSDB_LIBRARIES MATCHES NOTFOUND)
-    message(FATAL_ERROR "missing RocksDB library and KVDB set to rocksdb")
+    message(FATAL_ERROR "missing RocksDB library and KVDB set to rocksdb -- please install RocksDB library")
   endif (ROCKSDB_LIBRARIES MATCHES NOTFOUND)
 else()
   if (LEVELDB_LIBRARIES MATCHES NOTFOUND)
-    message(FATAL_ERROR "missing LevelDB library and KVDB set to leveldb (default)")
+    message(FATAL_ERROR "missing LevelDB library and KVDB set to leveldb (default) -- please install LevelDB library")
   endif (LEVELDB_LIBRARIES MATCHES NOTFOUND)
 endif (KVDB MATCHES rocksdb)
 
