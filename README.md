@@ -22,9 +22,9 @@ std::cout << myvec.at(0);
 ```
 
 **Currently Lavastone supports:**
-- unordered_map -- fully supported
-- vector -- fully supported
-- map -- works but ordering is guaranteed only for lexicographically-ordered serializable types (see below)[]
+- unordered_map &mdash; fully supported
+- vector &mdash; fully supported
+- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serializable types (see below)[]
 - set, unordered set are treated as vectors i.e. lack uniqueness guarantees
 
 
@@ -151,7 +151,7 @@ cd lavastone
 mkdir build
 cd build
 cmake ..
-cmake --build . --parallel
+cmake &mdash;build . &mdash;parallel
 ./test_lavastone 10000 && ./test_lavapack 10000
 ```
 ### Run Demo
@@ -228,12 +228,12 @@ Lavastone supports the same data types as Lavapack but currently there are a few
 ## Ideas to extend Lavastone:
 - Performance optimizations:
     - Implement caching, flushing
-    - Optimize leveldb seek for prefix traversal in lava::Ref<map> --> map conversion
+    - Optimize leveldb seek for prefix traversal in lava::Ref<map> &mdash;> map conversion
 - Features
     - Allow deletion of keys, resizing etc. for all types
     - Implement unordered_sets, sets, and ordered maps properly
     - Essentially make a Ref<someType> more transparently indistinguishable from someType for all the basic standard library data structures
-    - Make thread safe [like leveldb itself](https://github.com/google/leveldb/blob/master/doc/index.md#concurrency) -- should just have to replace the  `(*lava::numids)++;` top-level prefix allocation strategy
+    - Make thread safe [like leveldb itself](https://github.com/google/leveldb/blob/master/doc/index.md#concurrency) &mdash; should just have to replace the  `(*lava::numids)++;` top-level prefix allocation strategy
     - Allow specifying kv db options (directory, etc.), permit isolation in top-level namespaces (maybe change lava from a namespace to a class)
 
 
