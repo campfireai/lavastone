@@ -28,7 +28,7 @@ There are several techniques that go into this.
 ___Why would you use this?___
 Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
 Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
-My favorite use case, howevcer, is very fast checkpoint-resume. By doing this:
+Finally, lavastone can be used for very fast checkpoint-resume. By doing this:
 ```
 lava::Ref<MyComplicatedType> mydata_ondisk(0);
 mydata_ondisk = mydata_inmemory;

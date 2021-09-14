@@ -101,8 +101,6 @@ struct Ref<T, typename std::enable_if<std::conjunction<
     if (this == &v)
       return *this;
 
-    // demand(false, "assign to literal ref");
-    // id = v.id;
     *this = T(v);
     return *this;
   }
@@ -110,12 +108,7 @@ struct Ref<T, typename std::enable_if<std::conjunction<
     std::cerr << "initialize literal Ref\n";
     // for creating new key / empty ref
     // set the Ref's id and then increment
-    std::cerr << "numids = " << numids << "\n";
-    std::cerr << "numids->id = " << numids->id << "\n";
-    std::cerr << "*numids = " << *numids << "\n";
-    std::cerr << "gonna get prev_num_ids\n";
     size_t prev_num_ids = *numids;
-    std::cerr << "prev_num_ids = " << prev_num_ids << "\n";
     // I think that
     // for some reason when we set size_t prev_num_ids = (*numids)++
     // the compiler casts to a size_t and then increments
@@ -125,31 +118,26 @@ struct Ref<T, typename std::enable_if<std::conjunction<
     *this = T();
   }
   Ref(const std::string_view id_) {
-    // std::cout << "initialize literal ref with const std::string_view id\n";
     id = id_;
   }
   Ref(size_t id_) { id = ::Pack(&id_); }
 };
-
+bool is_initialized = false;
 void init() {
   options.create_if_missing = true;
   s = kvdb::DB::Open(options, path, &db);
   demand(s.ok(), s.ToString());
-
-  std::cerr << "numids = " << numids << "\n";
   numids = new Ref<size_t>("");
-  std::cerr << "numids = " << numids << "\n";
   std::string result;
   s = db->Get(kvdb::ReadOptions(), "", &result);
   if (s.IsNotFound()) {
     std::cout << "initializing numids = 0\n";
     *numids = 0;
-    std::cerr << "*numids = " << *numids << "\n";
-    std::cerr << "numids->id = " << numids->id << "\n";
   } else {
     demand(s.ok(), s.ToString());
     std::cout << "found existing numids = " << *numids << "\n";
   }
+  is_initialized=true;
 }
 
 // Ref to lavavector
@@ -171,6 +159,7 @@ struct Ref<Collection<T, Args...>,
   Ref() : len{""} {
     // for creating new key / empty ref
     // set id and increment
+    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
     size_t prev_num_ids = *numids;
     (*numids)++;
     id = Pack(&prev_num_ids);
@@ -178,7 +167,8 @@ struct Ref<Collection<T, Args...>,
     len = 0;
   }
   Ref(size_t id_) : len{""} {
-    // std::cerr << "initialize container with size_t id\n";
+    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+
     id = Pack(&id_);
     len.id = id;
 
@@ -188,6 +178,7 @@ struct Ref<Collection<T, Args...>,
   }
   Ref(std::string id_) : id{id_}, len{id_} {
     // if not exists, initialize the len
+    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
     size_t zero = 0;
     put_if_not_exists(len.id, Pack(&zero));
   }
@@ -205,20 +196,18 @@ struct Ref<Collection<T, Args...>,
     }
     return val;
   }
-  Ref<Collection<T, Args...>> &operator=(const Ref<Collection<T, Args...>> &v) {
-    // Guard self assignment
-    if (this == &v)
-      return *this;
-    // std::cerr << "v = " << v << "\n";
-    this->id = v.id;
-    this->len.id = v.len.id;
-    return *this;
-    // demand(false, "assigned to another ref in collection");
-  }
   Ref<Collection<T, Args...>> &operator=(const Collection<T, Args...> &v) {
     len = 0;
     for (auto elem : v)
       push_back(elem);
+    return *this;
+  }
+  Ref<Collection<T, Args...>> &operator=(const Ref<Collection<T, Args...>> &v) {
+    // Guard self assignment
+    if (this == &v)
+      return *this;
+
+    *this = Collection<T, Args...>(v);
     return *this;
   }
   size_t size() { return len; }
@@ -257,13 +246,16 @@ struct Ref<Mapping<T1, T2, Args...>,
     }
     return Ref<T2>(key);
   }
+  int count (const T1&k) {
+    return check_exists(id + Pack(&k));
+  }
   Ref<T2> at(const T1 &k) {
     // check this key stores a value (either the T2 value packed or the len for
     // a lavamap/lavavector)
     assert(check_exists(id + Pack(&k)));
     return (*this)[k];
   }
-  operator Mapping<T1, T2, Args...>() {
+  operator Mapping<T1, T2, Args...>() const {
     Mapping<T1, T2, Args...> val;
 
     // Get a database iterator
@@ -320,8 +312,6 @@ struct Ref<Mapping<T1, T2, Args...>,
     if (this == &v)
       return *this;
 
-    // this->id = v.id;
-    // this->len = v.len;
     *this = Mapping<T1, T2, Args...>(v);
     return *this;
   }
@@ -330,8 +320,8 @@ struct Ref<Mapping<T1, T2, Args...>,
   // include the len member in the constructor intializer list which avoids
   // default construction w/o arguments that would auto-select a key
   Ref() : len{""} {
-    // std::cerr << "initialize container Ref\n";
     // for creating new key / empty ref
+    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
     // set id and increment
     size_t prev_num_ids = *numids;
     (*numids)++;
@@ -340,7 +330,7 @@ struct Ref<Mapping<T1, T2, Args...>,
     len = 0;
   }
   Ref(size_t id_) : len{""} {
-    // std::cerr << "initialize mapping with size_t id\n";
+    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
     id = Pack(&id_);
     len.id = id;
     // if not exists, initialize the len
@@ -348,6 +338,7 @@ struct Ref<Mapping<T1, T2, Args...>,
     put_if_not_exists(len.id, Pack(&zero));
   }
   Ref(std::string id_) : id{id_}, len{id_} {
+    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
     // if not exists, initialize the len
     size_t zero = 0;
     put_if_not_exists(len.id, Pack(&zero));
