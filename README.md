@@ -47,6 +47,8 @@ int main() {
 - **map** &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization [see below](#extending-to-other-data-types)
 - **set** and **unordered set** are treated as vectors i.e. lack uniqueness guarantees (we didn't need these structures but they would be really simple to implement along the lines of the `lava::Ref<Mapping<...>>` if someone wants to open a PR!)
 
+### Use Case
+
 In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM. Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see benchmarks) of about 16x in our tests.
 
 For certain algorithms not well-suited to a SQL database, such as graph algorithms and ML models, it's much simpler to keep everything in C++ than to have to translate back and forth to the external database. For our use case involving an application that served graph queries to >100M rows of data, performing the pre-processing entirely in postgreSQL would take about a week whereas the in-memory processing + serialization took under an hour. The index was then served just fine by lightweight instances with a reasonably fast SSD. And we didn't have to rewrite all our search engine code in terms of SQL queries.
