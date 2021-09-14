@@ -41,7 +41,7 @@ int main() {
 ```
 (bigger demo showing other features [below](#bigger-demo))
 
-**Currently Lavastone supports:**
+**Currently supported:**
 - unordered_map &mdash; fully supported
 - vector &mdash; fully supported
 - map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization [see below](#extending-to-other-data-types)
