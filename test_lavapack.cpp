@@ -90,7 +90,7 @@ template <typename T1, typename T2> void test_map(std::map<T1, T2> foo) {
 }
 
 // this must be invoked once to allow (de)serialization of this struct type
-LAVASTONE_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
+LAVAPACK_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
 
 int main(int argc, char *argv[]) {
 

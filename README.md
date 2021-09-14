@@ -2,7 +2,7 @@
 [![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
-Lavastone aims to implement standard-library containers transparently backed by disk, using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
+Lavastone aims to provide transparently disk-backed standard-library containers, using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
 
 _Replace this:_
 ```c++
@@ -16,6 +16,7 @@ lava::Ref<vector<...> myvec
 myvec.push_back("hello, world!\n");
 std::cout << myvec.at(0);
 ```
+
 _How does this work?_
 There are several techniques that go into this.
 - The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
@@ -23,47 +24,53 @@ There are several techniques that go into this.
 - [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
 
 _Why would you use this?_
-Imagine you implemnted some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
-Or alteratively, you used to run it on smaller datasets and the dataset has outgrown your memory space.
+Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
+Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
 My favorite use case, however, is very fast checkpoint-resume. By doing this:
 ```
 lava::Ref<MyComplicatedType> mydata_ondisk(0);
-mydata_ondisk= mydata_inmemory;
+mydata_ondisk = mydata_inmemory;
 ```
-you chose a unique identifier for your datastructure which will persist across runs.
-If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and potentially with acceptable slowdown.
+you chose a unique identifier (0) for your datastructure which will persist across runs.
+If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and at reasonable speed (see [Motivation](#motivation)).
 
 
-
-Ideas to extend Lavastone:
-- Implement caching, flushing
-- Optimize leveldb seek for prefix traversal in lava::Ref<map> --> map conversion
-- Allow deletion of keys, resizing etc. for all types
-- Implement unordered_sets, sets, and ordered maps properly
-
-Benchmarks
-## Todo -- compare RocksDB and LevelDB perf, more systemized test suite, csv logging
+## Benchmarks
+## Todo -- compare RocksDB and LevelDB perf, more systemized test suite, csv loggi ng
 
 TL;DR: Serialize huge container datastructures to a key-value store (LevelDB), allowing fast disk-backed access in production.
 
-Serialize and deserialize C++ variables with Lavastone!
-Why would you use our 200-line header file?
-- It supports many standard types (`int`, `vector`, `map`, ... out of the box)
-- It is lightweight and simple to use
-- It is easily [extensible to other data types](#extending-to-other-data-types), without requiring changes to the class or struct definitions
 
 ### Motivation
 We built Lavastone for an application that needed to handle user queries to a big dataset. These queries could not be efficiently executed by an off-the-shelf SQL or graph-based database. Instead, our code populated many large datastructures that could be used to efficiently respond to the queries in production.
 
-The problem we had was that building these index datastructures could take several hours or days, which caused an unacceptable "boot time" of the application. To reduce the boot time, we built these datastructures once in an offline stage, serialize them to disk using Lavastone, and then loaded them back into memory in a matter of seconds to run in production.
+The problem we had was that building these index datastructures could take several hours or days, which caused an unacceptable "boot time" of the application. To reduce the boot time, we built these datastructures once in an offline stage on a machine with big RAM, serialized them to disk using Lavastone, and then "booted" into production without any delay serving the data from disk.
 
 1. __Build stage:__ (slow, takes several hours) Parse, clean, aggregate, and index the data with large datastructures and store these to disk
 2. __Production stage:__ (fast) Quickly load the index datastructures from disk and respond to user queries about the data using our custom application logic
 
-Lavastone is highly extensible: with one line it can accommodate arbitrary struct types via the fabulous [Boost Fusion library](https://www.boost.org/doc/libs/1_76_0/libs/fusion/doc/html/index.html).
+In fact you can just set `*lava::numids = 0` at the end of your build stage, and use the same block of C++ (the order is what matters) to declare your big data structure `Ref`s in both the build and production stages. As long as the `Ref`s are declared in the same order in both stages, they will see the same data in production as was stored by the build stage.
+
+
+Lavapack serialization is highly extensible: with one line it can accommodate arbitrary struct types via the fabulous [Boost Fusion library](https://www.boost.org/doc/libs/1_76_0/libs/fusion/doc/html/index.html).
 It can similarly accommodate most custom container types that support iteration, see [Usage](#usage).
+You could also replace it with 
 
 Please see the docs below to [get started](#compile-and-run-tests).
+
+## FAQ
+*Q: Why not use a database like SQLite or LevelDB?*
+
+*A:* Using a database  generally requires rewriting your code, such that it no longer works if you were to operate on in-memory data structures (std::vector, std::unordered_map etc.).
+The goal of Lavastone is to provide transparently disk-backed standard library containers that you can swap in whenever you find it helpful to have your data stored on disk. You may also get better performance with Lavastone than with (say) an uncompressed SQLite database due to LevelDB's (or RocksDB's) compression.
+
+*Q: Why not use [STXXL](https://stxxl.org/)*
+
+*A:* STXXL supports POD types only, so it does not play nicely with strings or other non-POD ilk.
+
+*Q: Why implement serialization / deserialization instead of using [Boost serialization](https://www.boost.org/doc/libs/1_75_0/libs/serialization/doc/tutorial.html)*
+
+*A:*  This way it's self-contained (using only the BTL to [support arbitrary structs](#adapting-a-custom-struct-type)), and in some cases faster (due to lack of metadata / being purely type-driven. But more importantly, we weren't familiar with the Boost serialization libraries at the start of this project. You could absolutely replace lavapack's (Un)Pack functions with boost (de)serialization and get better performance in a lot of cases.
 
 ## Getting Started
 ### Compile and run tests
@@ -74,9 +81,20 @@ mkdir build
 cd build
 cmake ..
 cmake --build . --parallel
-./test_lavastone 10000
+./test_lavastone 10000 && ./test_lavapack 10000
+```
+### Run Demo
+```bash
+./demo
 ```
 
+### Configuration options
+- `cmake -DCMAKE_BUILD_TYPE=debug` disable aggressive optimizations
+- `cmake -DKVDB=rocksdb` use RocksDB instead of the default LevelDB key-value store
+
+
+
+## Adding custom data type support to Lavapack
 ### Adapting a custom struct type
 ```c++
 #include <string>
@@ -88,8 +106,12 @@ struct MyStruct {
     std::string my_string;
 };
 
-LAVASTONE_ADAPT_STRUCT(MyStruct, my_int, my_string);
+LAVAPACK_ADAPT_STRUCT(MyStruct, my_int, my_string);
+```
 
+### Other types
+For other types, just implement 
+```
 ```
 Now lavastone knows how to serialize and deserialize your struct.
 ```c++
@@ -107,17 +129,24 @@ The `pack_to_file` and `unpack_from_file` convenience functions simply wrap the 
 Use these methods to access the raw strings that Lavastone serializes to / from.
 
 #### Extending to other data types
-If you need to extend to other container types, see the `PACK_1D_CONTAINER` and `PACK_2D_CONTAINER` macros in `lavastone.hpp`. Most likely, if you want to extend to a map-like type `MyMap`, you can have Lavastone declare the appropriate templates by adding two lines:
-```c++
-PACK_2D_CONTAINER(MyMap);
-UNPACK_2D_CONTAINER(MyMap);
-```
-Similarly for a 1D iterable container e.g. `MyVector`, you could use
-```c++
-PACK_1D_CONTAINER(MyVector);
-UNPACK_1D_CONTAINER(MyVector);
-```
-and then `Pack`, `pack_to_file`, and the associated deserializers should "just work".
+Lavapack supports vector-like and map-like container types.
+These should have a `begin()` method, which for the map should point to something with a `first` member. This handles most vector-like cases like `std::set, std::unordered_set, std::vector` and map-like cases like `std::map, std::unordered_map`.
+If you need to extend to other container types, just implement `Pack(const T*)` and `Unpack(const std::string&, T* out)`. Make sure to do this before including `lavastone.hpp`.
+
+Lavastone supports the same data types as Lavapack but currently there are a few limitations:
+- ordered maps `std::map` are only ordered properly if the keys get serialized to correctly (lexicographically) ordered byte sequences (see [leveldb comparator docs](https://github.com/google/leveldb/blob/master/doc/index.md#comparators)).
+- Sets are just treated as vectors which is fine if using with a build-production split (i.e., if the set is kept in-memory during the build stage, then written to disk, then served with read-only access during production) but this will pose a problem if you need uniqueness and r/w access to the disk-backed Ref<set> structure. 
+
+## Ideas to extend Lavastone:
+- Performance optimizations:
+    - Implement caching, flushing
+    - Optimize leveldb seek for prefix traversal in lava::Ref<map> --> map conversion
+- Features
+    - Allow deletion of keys, resizing etc. for all types
+    - Implement unordered_sets, sets, and ordered maps properly
+    - Essentially make a Ref<someType> more transparently indistinguishable from someType for all the basic standard library data structures
+    - Make thread safe [like leveldb itself](https://github.com/google/leveldb/blob/master/doc/index.md#concurrency) -- should just have to replace the  `(*lava::numids)++;` top-level prefix allocation strategy
+    - Allow specifying kv db options (directory, etc.), permit isolation in top-level namespaces (maybe change lava from a namespace to a class)
 
 
 ## Development and Contributing

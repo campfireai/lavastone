@@ -3,20 +3,18 @@
 
 #include <fstream>
 #include <iostream>
-#include <type_traits>
+#include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string_view>
-#include <set>
-#include <unordered_set>
-#include <map>
-#include <unordered_map>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <boost/fusion/adapted/struct.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/type_index.hpp>
-
 
 static std::string Pack(const std::string *data) { return *data; }
 static std::string Pack(const char *data[]) { return std::string(*data); }
@@ -77,9 +75,9 @@ static void Unpack(const std::string_view &data, std::vector<T> *vp) {
   }
 }
 
-
 // unpack via vector
-template <template <typename, typename...> typename Collection, typename T, typename... Args>
+template <template <typename, typename...> typename Collection, typename T,
+          typename... Args>
 static void Unpack(const std::string_view &data, Collection<T, Args...> *vp) {
   std::vector<T> vdata;
   Unpack(data, &vdata);
@@ -87,31 +85,32 @@ static void Unpack(const std::string_view &data, Collection<T, Args...> *vp) {
     vp->insert(elem);
 }
 
-
 // detect map-like objects
 template <typename T, typename = void>
 struct is_begin_points_first : std::false_type {};
 template <typename T>
-struct is_begin_points_first<T, std::void_t<decltype(std::declval<T>().begin()->first)>> : std::true_type {};
-
+struct is_begin_points_first<
+    T, std::void_t<decltype(std::declval<T>().begin()->first)>>
+    : std::true_type {};
 
 // detect container objects
-template <typename T, typename = void>
-struct is_begin : std::false_type {};
+template <typename T, typename = void> struct is_begin : std::false_type {};
 template <typename T>
-struct is_begin <T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type {};
-
+struct is_begin<T, std::void_t<decltype(std::declval<T>().begin())>>
+    : std::true_type {};
 
 // detect push_back method
-template <typename T, typename = void>
-struct is_push_back : std::false_type {};
+template <typename T, typename = void> struct is_push_back : std::false_type {};
 template <typename T>
-struct is_push_back <T, std::void_t<decltype(std::declval<T>().push_back(T()))>> : std::true_type {};
-
+struct is_push_back<T, std::void_t<decltype(std::declval<T>().push_back(T()))>>
+    : std::true_type {};
 
 // unpack map-like objects
-template <template <typename, typename, typename...> typename Mapping, typename T1, typename T2, typename... Args>
-static void Unpack(const std::string_view &data, Mapping<T1, T2> *mp, typename std::enable_if<is_begin_points_first<Mapping<T1, T2, Args...>>::value>::type* dummy = 0) {
+template <template <typename, typename, typename...> typename Mapping,
+          typename T1, typename T2, typename... Args>
+static void Unpack(const std::string_view &data, Mapping<T1, T2> *mp,
+                   typename std::enable_if<is_begin_points_first<
+                       Mapping<T1, T2, Args...>>::value>::type *dummy = 0) {
   size_t i = 0;
   while (i < data.size()) {
     size_t kslen, vslen;
@@ -128,7 +127,6 @@ static void Unpack(const std::string_view &data, Mapping<T1, T2> *mp, typename s
     (*mp)[k] = v;
   }
 }
-
 
 template <typename T> static std::string PackData(const T *data) {
   std::string d(sizeof(T), L'\0');
@@ -152,7 +150,6 @@ template <typename T> std::string Pack(std::vector<T> *data) {
   return packed_string;
 }
 
-
 // pack via vector
 template <template <typename, typename...> typename Collection, typename T,
           typename... Args>
@@ -164,8 +161,11 @@ std::string Pack(const Collection<T, Args...> *data) {
 }
 
 // pack map-like objects
-template <template <typename, typename, typename...> typename Mapping, typename T1, typename T2, typename... Args>
-std::string Pack(const Mapping<T1, T2, Args...> *data, typename std::enable_if<is_begin_points_first<Mapping<T1, T2, Args...>>::value>::type* dummy = 0) {
+template <template <typename, typename, typename...> typename Mapping,
+          typename T1, typename T2, typename... Args>
+std::string Pack(const Mapping<T1, T2, Args...> *data,
+                 typename std::enable_if<is_begin_points_first<
+                     Mapping<T1, T2, Args...>>::value>::type *dummy = 0) {
   std::string packed_string = "";
   for (auto kv : *data) {
     auto ks = Pack(&kv.first);
@@ -201,20 +201,16 @@ std::string FusionStructUnpack(const std::string_view &data, T *out) {
   return packed_string;
 }
 
-
 // catch-all declaration
-template<typename T>
-std::string Pack(const T *data);
-template<typename T>
-void Unpack(const std::string_view &data, T*mp);
+template <typename T> std::string Pack(const T *data);
+template <typename T> void Unpack(const std::string_view &data, T *mp);
 
-#define LAVASTONE_ADAPT_STRUCT(T, ...)                                         \
+#define LAVAPACK_ADAPT_STRUCT(T, ...)                                          \
   BOOST_FUSION_ADAPT_STRUCT(T, __VA_ARGS__);                                   \
   std::string Pack(const T *d) { return FusionStructPack(d); }                 \
   void Unpack(const std::string_view &data, T *d) {                            \
     FusionStructUnpack(data, d);                                               \
   }
-
 
 template <typename T> void pack_to_file(T *obj, std::string fname) {
   std::ofstream out(fname);

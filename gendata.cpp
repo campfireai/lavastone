@@ -25,7 +25,7 @@ recipe random_recipe() {
             random_element(nouns);
   r.author_location = random_element(directions) + " " +
                       random_element(cities) + ", " + random_element(states);
-  r.num_likes = std::rand() % 10000;
+  r.num_likes = std::rand() % 10;
   return r;
 }
 
