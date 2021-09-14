@@ -111,7 +111,7 @@ It is generally faster to do a bulk-serialization to a `lava::Ref` after some pr
 ```
 
 LevelDB and RocksDB have comparable performance as Lavastone backends.
-unsurprisingly, random disk reads are slower (16x) than random memory reads. Lavastone is still reasonably fast due to the highly optimized key-value store backends and a simple container serialization protocol.
+Unsurprisingly, random disk reads are slower (16x) than random memory reads. Lavastone is still reasonably fast due to the highly optimized key-value store backends and a simple container serialization protocol.
 For many applications this 16x may be an acceptable slowdown.
 
 
