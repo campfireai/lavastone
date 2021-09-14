@@ -30,6 +30,7 @@ ___with this:___
 #include "lavastone.hpp"
 
 using namespace std;
+
 int main() {
   lava::init();
   lava::Ref<vector<string>> myvec;
