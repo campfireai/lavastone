@@ -4,22 +4,41 @@
 
 
 Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) containing arbitrary serializable types.
-Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM.
+Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM. For our use case, pre-processing our big dataset in memory with C++ and then writing to disk with Lavastone finished in ~1 hour and  we could then spin up cheap disk-backed servers instantly. On the other hand, performing all the indexing directly with a SQL database would take weeks.
 
 ___Just replace this:___
 ```c++
-vector<string> myvec;
-myvec.push_back("hello, world!\n");
-myvec.at(0) = "in memory\n";
-std::cout << myvec.at(0);
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int main() {
+  vector<string> myvec;
+  myvec.push_back("hello, world!\n");
+  myvec.at(0) = "in memory\n";
+  cout << myvec.at(0);
+}
 ```
 ___with this:___
 ```c++
-lava::Ref<vector<string>> myvec;
-myvec.push_back("hello, world!\n");
-myvec.at(0) = "on disk\n";
-std::cout << myvec.at(0);
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "lavastone.hpp"
+
+using namespace std;
+int main() {
+  lava::init();
+  lava::Ref<vector<string>> myvec;
+  myvec.push_back("hello, world!\n");
+  myvec.at(0) = "on disk\n";
+  cout << myvec.at(0);
+}
 ```
+(bigger demo showing other features [below](#bigger-demo))
 
 **Currently Lavastone supports:**
 - unordered_map &mdash; fully supported
@@ -27,17 +46,29 @@ std::cout << myvec.at(0);
 - map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization (see below)[#-extending-to-other-data-types]
 - set, unordered set are treated as vectors i.e. lack uniqueness guarantees
 
+In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM. Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see benchmarks) of about 16x in our tests.
 
-In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM.
-Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see [benchmarks](#benchmarks)) of about 16x in our tests.
-
-For certain algorithms not well-suited to a SQL database, such as graph algorithms and ML models, it's much simpler to keep everything in C++ than to have to translate back and forth to the external database.
-For our use case involving an application that served graph queries to >100M rows of data, performing the pre-processing entirely in postgreSQL would take about a week whereas the in-memory processing + serialization took under an hour.
-The index was then served just fine by lightweight instances with a reasonably fast SSD.
-And we didn't have to rewrite all our code in terms of SQL queries 😛
+For certain algorithms not well-suited to a SQL database, such as graph algorithms and ML models, it's much simpler to keep everything in C++ than to have to translate back and forth to the external database. For our use case involving an application that served graph queries to >100M rows of data, performing the pre-processing entirely in postgreSQL would take about a week whereas the in-memory processing + serialization took under an hour. The index was then served just fine by lightweight instances with a reasonably fast SSD. And we didn't have to rewrite all our code in terms of SQL queries 😛
 
 
-## Disk-backed Standard Library Containers
+___How does this work?___
+There are several techniques that go into this.
+- The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
+- An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
+- [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
+
+___Why would you use this?___
+Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
+Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
+Finally, lavastone can be used for very fast checkpoint-resume. By doing this:
+```
+lava::Ref<MyComplicatedType> mydata_ondisk(0);
+mydata_ondisk = mydata_inmemory;
+```
+you chose a unique identifier (0) for your datastructure which will persist across runs.
+If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and at reasonable speed (see [Motivation](#motivation)).
+
+## Bigger Demo
 ```c++
 #include "lavastone.hpp"
 #include <iostream>
@@ -81,22 +112,7 @@ int main() {
 ```
 
 
-___How does this work?___
-There are several techniques that go into this.
-- The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
-- An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
-- [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
 
-___Why would you use this?___
-Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
-Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
-Finally, lavastone can be used for very fast checkpoint-resume. By doing this:
-```
-lava::Ref<MyComplicatedType> mydata_ondisk(0);
-mydata_ondisk = mydata_inmemory;
-```
-you chose a unique identifier (0) for your datastructure which will persist across runs.
-If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and at reasonable speed (see [Motivation](#motivation)).
 
 
 ## Benchmarks
