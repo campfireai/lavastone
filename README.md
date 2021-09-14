@@ -26,7 +26,7 @@ There are several techniques that go into this.
 ___Why would you use this?___
 Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
 Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
-My favorite use case, however, is very fast checkpoint-resume. By doing this:
+My favorite use case, howevcer, is very fast checkpoint-resume. By doing this:
 ```
 lava::Ref<MyComplicatedType> mydata_ondisk(0);
 mydata_ondisk = mydata_inmemory;
@@ -37,7 +37,7 @@ If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondi
 
 ## Benchmarks
 <img src="lavastone_backends_benchmarks.svg">
-Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and [RocksDB](#compilation-options).
+Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and [RocksDB](#build-options).
 
 ```bash
 ./test_lavastone 100000
@@ -81,7 +81,7 @@ cmake --build . --parallel
 ./demo
 ```
 
-### Compilation options
+### Build options
 - `cmake -DCMAKE_BUILD_TYPE=debug` disable aggressive optimizations
 - `cmake -DKVDB=rocksdb` use RocksDB instead of the default LevelDB key-value store backend
 
