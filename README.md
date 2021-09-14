@@ -63,6 +63,7 @@ For certain algorithms not well-suited to a SQL database, such as graph algorith
 #include <unordered_map>
 
 using namespace std;
+
 int main() {
   // always run this before constructing lava::Ref<>'s:
   lava::init();
