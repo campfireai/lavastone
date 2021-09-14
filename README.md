@@ -43,7 +43,7 @@ int main() {
 **Currently Lavastone supports:**
 - unordered_map &mdash; fully supported
 - vector &mdash; fully supported
-- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization (see below)[#extending-to-other-data-types]
+- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization [see below](#extending-to-other-data-types)
 - set, unordered set are treated as vectors i.e. lack uniqueness guarantees
 
 In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM. Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see benchmarks) of about 16x in our tests.
@@ -231,7 +231,7 @@ unpack_from_file("foo.struct", &foo_new);
 The `pack_to_file` and `unpack_from_file` convenience functions simply wrap the core serialization engine, which consists of a library of `Pack` and `Unpack` functions implemented for various fixed-width and container types.
 Use these methods to access the raw strings that Lavastone serializes to / from.
 
-## Extending to other data types
+### Extending to other data types
 Lavapack supports vector-like and map-like container types.
 These should have a `begin()` method, which for the map should point to something with a `first` member. This handles most vector-like cases like `std::set, std::unordered_set, std::vector` and map-like cases like `std::map, std::unordered_map`.
 If you need to extend to other container types, just implement `Pack(const T*)` and `Unpack(const std::string&, T* out)`. Make sure to do this before including `lavastone.hpp`.
