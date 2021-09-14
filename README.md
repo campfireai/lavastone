@@ -36,7 +36,7 @@ If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondi
 
 
 ## Benchmarks
-## Todo -- compare RocksDB and LevelDB perf, more systemized test suite, csv loggi ng
+<img src="lavastone_backends_benchmarks.svg" />
 
 TL;DR: Serialize huge container datastructures to a key-value store (LevelDB), allowing fast disk-backed access in production.
 
@@ -54,7 +54,7 @@ In fact you can just set `*lava::numids = 0` at the end of your build stage, and
 
 Lavapack serialization is highly extensible: with one line it can accommodate arbitrary struct types via the fabulous [Boost Fusion library](https://www.boost.org/doc/libs/1_76_0/libs/fusion/doc/html/index.html).
 It can similarly accommodate most custom container types that support iteration, see [Usage](#usage).
-You could also replace it with 
+You could also replace it with
 
 Please see the docs below to [get started](#compile-and-run-tests).
 
@@ -110,7 +110,7 @@ LAVAPACK_ADAPT_STRUCT(MyStruct, my_int, my_string);
 ```
 
 ### Other types
-For other types, just implement 
+For other types, just implement
 ```
 ```
 Now lavastone knows how to serialize and deserialize your struct.
@@ -135,7 +135,7 @@ If you need to extend to other container types, just implement `Pack(const T*)` 
 
 Lavastone supports the same data types as Lavapack but currently there are a few limitations:
 - ordered maps `std::map` are only ordered properly if the keys get serialized to correctly (lexicographically) ordered byte sequences (see [leveldb comparator docs](https://github.com/google/leveldb/blob/master/doc/index.md#comparators)).
-- Sets are just treated as vectors which is fine if using with a build-production split (i.e., if the set is kept in-memory during the build stage, then written to disk, then served with read-only access during production) but this will pose a problem if you need uniqueness and r/w access to the disk-backed Ref<set> structure. 
+- Sets are just treated as vectors which is fine if using with a build-production split (i.e., if the set is kept in-memory during the build stage, then written to disk, then served with read-only access during production) but this will pose a problem if you need uniqueness and r/w access to the disk-backed Ref<set> structure.
 
 ## Ideas to extend Lavastone:
 - Performance optimizations:
