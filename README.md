@@ -15,7 +15,7 @@ std::cout << myvec.at(0);
 ```
 ___with this:___
 ```c++
-lava::Ref<vector<...>> myvec;
+lava::Ref<vector<string>> myvec;
 myvec.push_back("hello, world!\n");
 myvec.at(0) = "on disk\n";
 std::cout << myvec.at(0);
