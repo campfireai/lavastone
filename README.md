@@ -4,7 +4,7 @@
 
 
 Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) for arbitrary serializable types.
-Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM. For our use case, pre-processing our big dataset in memory with C++ and then writing to disk with Lavastone finished in ~1 hour and  we could then spin up cheap disk-backed servers instantly. On the other hand, performing all the indexing directly with a SQL database would take weeks.
+Disk-backed Lavstone's `Ref`s behave nearly identically to in-memory containers, which means code can be trivially adapted to use the disk once the dataset has outgrown the RAM. For our use case, pre-processing our big dataset in memory with C++ and then writing to disk with Lavastone finished in ~1 hour and  we could then spin up cheap disk-backed servers instantly. On the other hand, performing all the indexing directly with a SQL database would take weeks.
 
 ___Just replace this:___
 ```c++
