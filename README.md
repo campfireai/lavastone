@@ -51,23 +51,6 @@ In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dat
 For certain algorithms not well-suited to a SQL database, such as graph algorithms and ML models, it's much simpler to keep everything in C++ than to have to translate back and forth to the external database. For our use case involving an application that served graph queries to >100M rows of data, performing the pre-processing entirely in postgreSQL would take about a week whereas the in-memory processing + serialization took under an hour. The index was then served just fine by lightweight instances with a reasonably fast SSD. And we didn't have to rewrite all our search engine code in terms of SQL queries.
 
 
-___How does this work?___
-There are several techniques that go into this.
-- The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
-- An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
-- [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
-
-___Why would you use this?___
-Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
-Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
-Finally, lavastone can be used for very fast checkpoint-resume. By doing this:
-```
-lava::Ref<MyComplicatedType> mydata_ondisk(0);
-mydata_ondisk = mydata_inmemory;
-```
-you chose a unique identifier (0) for your datastructure which will persist across runs.
-If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and at reasonable speed (see [Motivation](#motivation)).
-
 ## Bigger Demo
 ```c++
 #include "lavastone.hpp"
@@ -110,9 +93,6 @@ int main() {
   cout << vector_of_maps_on_disk.at(1).at("world") << "\n";
 }
 ```
-
-
-
 
 
 ## Benchmarks
@@ -180,6 +160,27 @@ cmake &mdash;build . &mdash;parallel
 - `cmake -DKVDB=rocksdb` use RocksDB instead of the default LevelDB key-value store backend
 
 ## FAQ
+
+___Q: How does this work?___
+
+___A:___ There are several techniques that go into this.
+- The `lava::Ref::operator=` is overloaded to instrument stores to a Ref to update the data on disk.
+- An implicit conversion operator `lava::Ref<T>::operator T ()`  implements the load from disk to allow Refs to be converted (in most cases*) automatically by the compiler to the referred data type
+- [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) is used to split the implementation of `lava::Ref` for Vector-like and Map-like types
+
+___Q: Why would you use this?___
+
+___A:___ Imagine you implemented some C++ code that ran on a big server, and now need to port it over to a mobile phone with reduced memory.
+Or alteratively, you previously ran it on smaller datasets and the dataset has outgrown your memory space.
+Finally, lavastone can be used for very fast checkpoint-resume. By doing this:
+```
+lava::Ref<MyComplicatedType> mydata_ondisk(0);
+mydata_ondisk = mydata_inmemory;
+```
+you chose a unique identifier (0) for your datastructure which will persist across runs.
+If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondisk(0);` it can start serving requests *immediately* and at reasonable speed (see [Motivation](#motivation)).
+
+
 ___Q: Why not use a database like SQLite or LevelDB directly?___
 
 ___A:___ Using a database  generally requires rewriting your code, such that it no longer works if you were to operate on in-memory data structures (std::vector, std::unordered_map etc.).
@@ -192,6 +193,7 @@ ___A:___ STXXL supports POD types only, so it does not play nicely with strings 
 ___Q: Why implement serialization / deserialization from scratch instead of using [Boost serialization](https://www.boost.org/doc/libs/1_75_0/libs/serialization/doc/tutorial.html)___
 
 ___A:___  This way it's self-contained (using only the BTL to [support arbitrary structs](#adapting-a-custom-struct-type)), and in some cases faster (due to lack of metadata / being purely type-driven. But more importantly, we weren't familiar with the Boost serialization libraries at the start of this project. You could absolutely replace lavapack's (Un)Pack functions with boost (de)serialization and get better performance in a lot of cases.
+
 
 
 ## Adding custom data type support to Lavapack
