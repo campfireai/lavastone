@@ -37,7 +37,7 @@ If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondi
 
 ## Benchmarks
 <img src="lavastone_backends_benchmarks.svg">
-Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and [RocksDB](#build-options).
+Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and RocksDB (see build options below).
 
 ```bash
 ./test_lavastone 100000
