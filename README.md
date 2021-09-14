@@ -2,7 +2,8 @@
 [![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
-Lavastone aims to provide transparently disk-backed standard-library containers (vector, unordered_map etc.) containing arbitrary serializable types, using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
+Lavastone provides transparently disk-backed C++ standard library (STL) containers (vector, unordered_map etc.) containing arbitrary serializable types.
+Lavstone's `Ref`s behave nearly identically to their corresponding STL containers, which means code written for memory-backed STL containers can be trivially adapted to use the disk once the dataset has outgrown RAM.
 
 ___Replace this:___
 ```c++
@@ -18,6 +19,22 @@ myvec.push_back("hello, world!\n");
 myvec.at(0) = "on disk\n";
 std::cout << myvec.at(0);
 ```
+
+**Currently Lavastone supports:**
+- unordered_map -- fully supported
+- vector -- fully supported
+- map -- works but ordering is guaranteed only for lexicographically-ordered serializable types (see below)[]
+- set, unordered set are treated as vectors i.e. lack uniqueness guarantees
+
+
+In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM.
+Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see [benchmarks](#benchmarks)) of about 16x in our tests.
+
+For certain algorithms not well-suited to a SQL database, such as graph algorithms and ML models, it's much simpler to keep everything in C++ than to have to translate back and forth to the external database.
+For our use case involving an application that served graph queries to >100M rows of data, performing the pre-processing entirely in postgreSQL would take about a week whereas the in-memory processing + serialization took under an hour.
+The index was then served just fine by lightweight instances with a reasonably fast SSD.
+And we didn't have to rewrite all our code in terms of SQL queries 😛
+
 
 ## Disk-backed Standard Library Containers
 ```c++
