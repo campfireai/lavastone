@@ -44,7 +44,8 @@ Benchmarks above are for sequential and random read-writes with 100k randomly-ge
 ```
 
 LevelDB and RocksDB have comparable performance as Lavastone backends.
-unsurprisingly, random disk reads are much slower than random memory reads. Lavastone is still reasonably fast due to these highly optimized backends and a simple container serialization protocol.
+unsurprisingly, random disk reads are slower (16x) than random memory reads. Lavastone is still reasonably fast due to the highly optimized key-value store backends and a simple container serialization protocol.
+For many applications this 16x may be an acceptable slowdown.
 
 
 ### Motivation
@@ -115,10 +116,14 @@ LAVAPACK_ADAPT_STRUCT(MyStruct, my_int, my_string);
 ```
 
 ### Other types
-For other types, just implement
+For other type `T`, just implement
 ```
+std::string Pack(const T* data)
+void Unpack(const std::string& serialized, T* data)
 ```
-Now lavastone knows how to serialize and deserialize your struct.
+Now lavastone knows how to serialize and deserialize your struct!
+Make sure to implement these after `#include "lavapack.hpp"` but before `#include "lavastone.hpp"`.
+
 ```c++
 // serialize
 MyStruct foo = {.my_int=42, .my_string="hello world"};
