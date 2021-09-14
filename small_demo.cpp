@@ -1,9 +1,8 @@
 #include "lavastone.hpp"
-#include <chrono>
 #include <iostream>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 int main() {
@@ -22,8 +21,7 @@ int main() {
   // things works pretty much the same way!
 
   // lava::Ref also supports vectors and nested types:
-  lava::Ref<vector<unordered_map<string, int>>>
-    vector_of_maps_on_disk;
+  lava::Ref<vector<unordered_map<string, int>>> vector_of_maps_on_disk;
 
   // disk-backed containers play nice with each other:
   vector_of_maps_on_disk.push_back(cool_map_on_disk);

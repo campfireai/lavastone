@@ -117,9 +117,7 @@ struct Ref<T, typename std::enable_if<std::conjunction<
     // initialize
     *this = T();
   }
-  Ref(const std::string_view id_) {
-    id = id_;
-  }
+  Ref(const std::string_view id_) { id = id_; }
   Ref(size_t id_) { id = ::Pack(&id_); }
 };
 bool is_initialized = false;
@@ -137,7 +135,7 @@ void init() {
     demand(s.ok(), s.ToString());
     std::cout << "found existing lava::numids = " << *numids << "\n";
   }
-  is_initialized=true;
+  is_initialized = true;
 }
 
 // Ref to lavavector
@@ -159,7 +157,8 @@ struct Ref<Collection<T, Args...>,
   Ref() : len{""} {
     // for creating new key / empty ref
     // set id and increment
-    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+    demand(lava::is_initialized,
+           "must run lava::init() before declaring disk-backed refs");
     size_t prev_num_ids = *numids;
     (*numids)++;
     id = Pack(&prev_num_ids);
@@ -167,7 +166,8 @@ struct Ref<Collection<T, Args...>,
     len = 0;
   }
   Ref(size_t id_) : len{""} {
-    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+    demand(lava::is_initialized,
+           "must run lava::init() before declaring disk-backed refs");
 
     id = Pack(&id_);
     len.id = id;
@@ -178,7 +178,8 @@ struct Ref<Collection<T, Args...>,
   }
   Ref(std::string id_) : id{id_}, len{id_} {
     // if not exists, initialize the len
-    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+    demand(lava::is_initialized,
+           "must run lava::init() before declaring disk-backed refs");
     size_t zero = 0;
     put_if_not_exists(len.id, Pack(&zero));
   }
@@ -246,9 +247,7 @@ struct Ref<Mapping<T1, T2, Args...>,
     }
     return Ref<T2>(key);
   }
-  int count (const T1&k) {
-    return check_exists(id + Pack(&k));
-  }
+  int count(const T1 &k) { return check_exists(id + Pack(&k)); }
   Ref<T2> at(const T1 &k) {
     // check this key stores a value (either the T2 value packed or the len for
     // a lavamap/lavavector)
@@ -321,7 +320,8 @@ struct Ref<Mapping<T1, T2, Args...>,
   // default construction w/o arguments that would auto-select a key
   Ref() : len{""} {
     // for creating new key / empty ref
-    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+    demand(lava::is_initialized,
+           "must run lava::init() before declaring disk-backed refs");
     // set id and increment
     size_t prev_num_ids = *numids;
     (*numids)++;
@@ -330,7 +330,8 @@ struct Ref<Mapping<T1, T2, Args...>,
     len = 0;
   }
   Ref(size_t id_) : len{""} {
-    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+    demand(lava::is_initialized,
+           "must run lava::init() before declaring disk-backed refs");
     id = Pack(&id_);
     len.id = id;
     // if not exists, initialize the len
@@ -338,7 +339,8 @@ struct Ref<Mapping<T1, T2, Args...>,
     put_if_not_exists(len.id, Pack(&zero));
   }
   Ref(std::string id_) : id{id_}, len{id_} {
-    demand(lava::is_initialized, "must run lava::init() before declaring disk-backed refs");
+    demand(lava::is_initialized,
+           "must run lava::init() before declaring disk-backed refs");
     // if not exists, initialize the len
     size_t zero = 0;
     put_if_not_exists(len.id, Pack(&zero));
