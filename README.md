@@ -24,7 +24,7 @@ std::cout << myvec.at(0);
 **Currently Lavastone supports:**
 - unordered_map &mdash; fully supported
 - vector &mdash; fully supported
-- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serializable types (see below)[]
+- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization (see below)[#-extending-to-other-data-types]
 - set, unordered set are treated as vectors i.e. lack uniqueness guarantees
 
 
@@ -183,7 +183,6 @@ ___A:___  This way it's self-contained (using only the BTL to [support arbitrary
 ```c++
 #include <string>
 #include "lavastone.hpp"
-
 
 struct MyStruct {
     int my_int;
