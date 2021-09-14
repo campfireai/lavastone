@@ -206,7 +206,7 @@ ___A:___  This way it's self-contained (using only the BTL to [support arbitrary
 ### Adapting a custom struct type
 ```c++
 #include <string>
-#include "lavastone.hpp"
+#include "lavapack.hpp"
 
 struct MyStruct {
     int my_int;
@@ -214,6 +214,9 @@ struct MyStruct {
 };
 
 LAVAPACK_ADAPT_STRUCT(MyStruct, my_int, my_string);
+
+// include lavastone after the struct is adapted:
+#include "lavastone.hpp"
 ```
 
 ### Other types
