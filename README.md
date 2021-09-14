@@ -47,6 +47,8 @@ int main() {
 - **map** &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization [see below](#extending-to-other-data-types)
 - **set** and **unordered set** are treated as vectors i.e. lack uniqueness guarantees (we didn't need these structures but they would be really simple to implement along the lines of the `lava::Ref<Mapping<...>>` if someone wants to open a PR!)
 
+Currently, Lavastone uses either [LevelDB](https://github.com/google/leveldb) or [RocksDB](https://github.com/facebook/rocksdb) as its key-value storage backend and automatically creates a key-value store at `./kv/`.
+
 ### Use Case
 
 In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM. Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see benchmarks) of about 16x in our tests.
