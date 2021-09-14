@@ -47,7 +47,7 @@ int main() {
 - **map** &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization [see below](#extending-to-other-data-types)
 - **set** and **unordered set** are treated as vectors i.e. lack uniqueness guarantees (we didn't need these structures but they would be really simple to implement along the lines of the `lava::Ref<Mapping<...>>` if someone wants to open a PR!)
 
-Currently, Lavastone uses either [LevelDB](https://github.com/google/leveldb) or [RocksDB](https://github.com/facebook/rocksdb) as its key-value storage backend and automatically creates a key-value store at `./kv/`.
+Lavastone uses either [LevelDB](https://github.com/google/leveldb) or [RocksDB](https://github.com/facebook/rocksdb) as its key-value storage backend and automatically creates a key-value store at `./kv/`.
 
 ### Use Case
 
