@@ -103,7 +103,7 @@ int main() {
 
 ## Benchmarks
 <img src="lavastone_benchmarks.svg">
-Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and RocksDB (see build options below).
+Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and RocksDB (see build options below). Note the two plots have different y-scaling.  
 It is generally faster to do a bulk-serialization to a `lava::Ref` after some pre-computation to prepare a data structure in memory. In many cases it's fine to serve requests from an on-disk `lava::Ref` (at least until the data is fully loaded back into memory by some other thread, if necessary).
 
 ```bash
