@@ -37,8 +37,9 @@ If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondi
 
 ## Benchmarks
 <img src="lavastone_backends_benchmarks.svg" />
-
-TL;DR: Serialize huge container datastructures to a key-value store (LevelDB), allowing fast disk-backed access in production.
+Benchmark timing is done with `./test_lavastone 100000` to test random read-writes with 100k randomly-generated data records on an NVME SSD drive.
+LevelDB and RocksDB have comparable performance as Lavastone backends.
+unsurprisingly, random disk reads are much slower than random memory reads.
 
 
 ### Motivation
