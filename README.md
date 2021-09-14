@@ -2,7 +2,7 @@
 [![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
-Lavastone aims to provide transparently disk-backed standard-library containers, using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
+Lavastone aims to provide transparently disk-backed standard-library containers (vector, unordered_map etc.), using [LevelDB](https://github.com/google/leveldb) / [RocksDB](https://github.com/facebook/rocksdb) as a key-value storage backend.
 
 _Replace this:_
 ```c++
