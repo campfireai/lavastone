@@ -10,6 +10,8 @@ struct my_struct {
 };
 // this must be invoked once to allow (de)serialization of this struct type
 LAVAPACK_ADAPT_STRUCT(my_struct, my_int, my_string);
+// We also invoke to enable packing / unpacking of the recipe struct defined in gendata.hpp
+LAVAPACK_ADAPT_STRUCT(recipe, title, author, author_location, num_likes);
 #include "lavastone.hpp"
 
 #define demand(cond, str)                                                      \
