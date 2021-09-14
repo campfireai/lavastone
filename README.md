@@ -38,9 +38,11 @@ If we start the app again and declare  `lava::Ref<MyComplicatedType> mydata_ondi
 ## Benchmarks
 <img src="lavastone_backends_benchmarks.svg" />
 Benchmarks above are for sequential and random read-writes with 100k randomly-generated data records on an NVME SSD drive with LevelDB and [RocksDB](#configuration-options).
+
 ```bash
 ./test_lavastone 100000
 ```
+
 LevelDB and RocksDB have comparable performance as Lavastone backends.
 unsurprisingly, random disk reads are much slower than random memory reads. Lavastone is still reasonably fast due to these highly optimized backends and a simple container serialization protocol.
 
