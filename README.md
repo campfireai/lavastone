@@ -231,7 +231,7 @@ unpack_from_file("foo.struct", &foo_new);
 The `pack_to_file` and `unpack_from_file` convenience functions simply wrap the core serialization engine, which consists of a library of `Pack` and `Unpack` functions implemented for various fixed-width and container types.
 Use these methods to access the raw strings that Lavastone serializes to / from.
 
-#### Extending to other data types
+## Extending to other data types
 Lavapack supports vector-like and map-like container types.
 These should have a `begin()` method, which for the map should point to something with a `first` member. This handles most vector-like cases like `std::set, std::unordered_set, std::vector` and map-like cases like `std::map, std::unordered_map`.
 If you need to extend to other container types, just implement `Pack(const T*)` and `Unpack(const std::string&, T* out)`. Make sure to do this before including `lavastone.hpp`.
