@@ -1,4 +1,4 @@
-# lavastone 🌋🪨
+# lavastone 🌋
 [![Unlicense](https://img.shields.io/badge/license-UNLICENSE-green.svg)](LICENSE)
 [![CI](https://github.com/campfireai/lavastone/actions/workflows/demo.yml/badge.svg)](https://github.com/campfireai/lavastone/actions/workflows/demo.yml)
 
