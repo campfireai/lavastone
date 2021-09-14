@@ -43,7 +43,7 @@ int main() {
 **Currently Lavastone supports:**
 - unordered_map &mdash; fully supported
 - vector &mdash; fully supported
-- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization (see below)[#-extending-to-other-data-types]
+- map &mdash; works but ordering is guaranteed only for lexicographically-ordered serialization (see below)[#extending-to-other-data-types]
 - set, unordered set are treated as vectors i.e. lack uniqueness guarantees
 
 In a typical use pattern, an application will serve some large (~0.1 - 1 TB) dataset with a search index consisting of some STL containers produced by a pre-processing step. During this one-time pre-processing, we can afford a huge-memory instance that can fit all the data in RAM. Once the index containers are produced, they are seamlessly converted to Lavastone containers on disk. The server code can then fit on a tiny-memory instance and all the code written for STL containers will "just work" with a not-terrible slowdown (see benchmarks) of about 16x in our tests.
