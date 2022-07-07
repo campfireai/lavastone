@@ -99,6 +99,11 @@ template <typename T>
 struct is_begin<T, std::void_t<decltype(std::declval<T>().begin())>>
     : std::true_type {};
 
+template <typename T, typename = void> struct is_not_begin : std::true_type {};
+template <typename T>
+struct is_not_begin<T, std::void_t<decltype(std::declval<T>().begin())>>
+    : std::false_type {};
+
 // detect push_back method
 template <typename T, typename = void> struct is_push_back : std::false_type {};
 template <typename T>
@@ -139,6 +144,8 @@ static inline std::string Pack(const int *data) { return PackData(data); }
 static inline std::string Pack(const unsigned *data) { return PackData(data); }
 
 static inline std::string Pack(const size_t *data) { return PackData(data); }
+
+static inline std::string Pack(const double *data) { return PackData(data); }
 
 template <typename T> std::string Pack(std::vector<T> *data) {
   std::string packed_string = "";
@@ -205,12 +212,15 @@ std::string FusionStructUnpack(const std::string_view &data, T *out) {
 template <typename T> std::string Pack(const T *data);
 template <typename T> void Unpack(const std::string_view &data, T *mp);
 
-#define LAVAPACK_ADAPT_STRUCT(T, ...)                                          \
-  BOOST_FUSION_ADAPT_STRUCT(T, __VA_ARGS__);                                   \
+#define LAVAPACK_USE_FUSION(T)                                                 \
   std::string Pack(const T *d) { return FusionStructPack(d); }                 \
   void Unpack(const std::string_view &data, T *d) {                            \
     FusionStructUnpack(data, d);                                               \
   }
+
+#define LAVAPACK_ADAPT_STRUCT(T, ...)                                          \
+  BOOST_FUSION_ADAPT_STRUCT(T, __VA_ARGS__);                                   \
+  LAVAPACK_USE_FUSION(T);
 
 template <typename T> void pack_to_file(T *obj, std::string fname) {
   std::ofstream out(fname);
