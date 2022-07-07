@@ -146,6 +146,8 @@ struct Ref<Collection<T, Args...>,
            typename std::enable_if<!std::disjunction<
                std::is_same<Collection<T>, Ref<T>>,
                std::is_same<Collection<T>, std::string>,
+               // must have .begin() method
+               is_not_begin<Collection<T>>,
                is_begin_points_first<Collection<T>>>::value>::type> {
   // key in kvstore
   std::string id;
